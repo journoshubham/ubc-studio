@@ -568,13 +568,18 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--t1)
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBgLPlI2hMWXvf6IxXQiFeNZ_4mS3fNXBs",authDomain:"ubc-news-studio-27a58.firebaseapp.com",databaseURL:"https://ubc-news-studio-27a58-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ubc-news-studio-27a58",storageBucket:"ubc-news-studio-27a58.firebasestorage.app",messagingSenderId:"198115979934",appId:"1:198115979934:web:d7e6b56f447f086145018f"});
 const db=firebase.database();
-const GU='https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const GAPI='https://generativelanguage.googleapis.com/v1beta/models/';
+const GM=['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash-latest'];
+const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','reports','tone','settings'],editor:['dashboard','production','tasks','chat','settings'],anchor:['dashboard','production','tasks','chat','settings']};
 let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null};
 
-function firstRun(){db.ref('users').orderByChild('role').equalTo('admin').once('value',s=>{if(s.exists())return;db.ref('users').push({name:'Admin',username:'admin',password:'ubc@2025',role:'admin',active:true,createdAt:Date.now(),lastSeen:0});db.ref('settings/config').set({geminiKey:'AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8',claudeKey:''});});}
+function cleanGemKey(key){const k=(key||'').trim();return LEGACY_GEM_KEYS.has(k)?'':k;}
+function firstRun(){db.ref('users').orderByChild('role').equalTo('admin').once('value',s=>{if(s.exists())return;db.ref('users').push({name:'Admin',username:'admin',password:'ubc@2025',role:'admin',active:true,createdAt:Date.now(),lastSeen:0});db.ref('settings/config').set({geminiKey:'',claudeKey:''});});}
+function sanitizeCfg(){db.ref('settings/config').once('value',s=>{if(!s.exists())return;const v=s.val()||{};const g=cleanGemKey(v.geminiKey);if(g!==(v.geminiKey||''))db.ref('settings/config').update({geminiKey:g});});}
 firstRun();
+sanitizeCfg();
 
 function doLogin(){
   const u=document.getElementById('l-user').value.trim().toLowerCase(),p=document.getElementById('l-pass').value;
@@ -586,7 +591,7 @@ function doLogin(){
     if(d.active===false){se('Account disabled');return;}
     S.p={...d,uid};
     db.ref('settings/config').once('value',cs=>{
-      if(cs.exists()){const v=cs.val();S.gk=v.geminiKey||'';S.ck=v.claudeKey||'';}
+      if(cs.exists()){const v=cs.val();S.gk=cleanGemKey(v.geminiKey);S.ck=v.claudeKey||'';}
       db.ref('users/'+uid+'/lastSeen').set(Date.now());
       document.getElementById('lg').style.display='none';
       const app=document.getElementById('app');app.classList.add('on');app.style.display='flex';app.style.flexDirection='column';
@@ -633,19 +638,45 @@ function showTab(id){
 function setAI(ai){S.ai=ai;document.getElementById('ai-gem').classList.toggle('on',ai==='gemini');document.getElementById('ai-cla').classList.toggle('on',ai==='claude');document.getElementById('ai-lbl').textContent=ai==='gemini'?'✦ GEMINI POWERED':'◈ CLAUDE POWERED';toast(ai==='gemini'?'Switched to Gemini':'Switched to Claude');}
 
 async function callAI(prompt){
-  if(!S.gk)throw new Error('Add Gemini API key in Settings first');
-  const models=['gemini-1.5-flash','gemini-2.0-flash-lite','gemini-1.5-pro','gemini-pro'];
-  for(const model of models){
-    try{
-      const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+S.gk;
-      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.8,maxOutputTokens:2500}})});
+  const key=(S.gk||'').trim();
+  if(!key)throw new Error('Add Gemini API key in Settings first');
+  if(!/^AIza[0-9A-Za-z_-]{20,}$/.test(key))throw new Error('Gemini key format looks invalid. Paste full key from Google AI Studio.');
+  const payload={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.8,maxOutputTokens:2500}};
+  let lastErr='Gemini request failed',sawQuota=false;
+  for(const model of GM){
+    const url=GAPI+model+':generateContent?key='+encodeURIComponent(key);
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(r.ok){
       const d=await r.json();
-      if(r.ok) return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
-      const msg=d.error?.message||'';
-      if(!msg.includes('not found')&&!msg.includes('no longer available')&&!msg.includes('deprecated')) throw new Error(msg);
-    }catch(e){if(e.message&&!e.message.includes('not found')&&!e.message.includes('no longer available')) throw e;}
+      const out=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+      if(out)return out;
+      throw new Error('Gemini returned empty response');
+    }
+    const em=await parseGemErr(r);
+    if((r.status===429||/quota|rate limit|resource_exhausted/i.test(em)))sawQuota=true;
+    if(retryGem(r.status,em)){lastErr=em;continue;}
+    throw new Error(em);
   }
-  throw new Error('No working Gemini model found. Check API key.');
+  if(sawQuota)throw new Error('All configured Gemini models hit quota/rate limits for this key.');
+  throw new Error(lastErr);
+}
+
+async function parseGemErr(res){
+  let body='',data=null;
+  try{body=await res.text();data=body?JSON.parse(body):null;}catch(_){}
+  const msg=(data?.error?.message||body||('API Error '+res.status)).trim();
+  const l=msg.toLowerCase();
+  if(res.status===400&&(l.includes('api key not valid')||l.includes('api_key_invalid')||l.includes('credentials')))return'Invalid Gemini API key. Use a valid AI Studio key (starts with AIza...).';
+  if(res.status===403&&l.includes('api has not been used'))return'Generative Language API is not enabled on this key project.';
+  if(res.status===403&&(l.includes('referer')||l.includes('referrer')||l.includes('permission denied')))return'API key restriction blocked this request. Allow your site origin in key restrictions.';
+  if((res.status===429||res.status===403)&&(l.includes('quota')||l.includes('rate')||l.includes('resource_exhausted')||l.includes('billing')))return'Quota/rate limit reached for this model.';
+  if(res.status===404&&l.includes('model'))return'Model not available for this key/project.';
+  return msg||('API Error '+res.status);
+}
+
+function retryGem(status,msg){
+  const l=(msg||'').toLowerCase();
+  return status===404||status===429||l.includes('quota')||l.includes('rate limit')||l.includes('resource_exhausted')||l.includes('model not available');
 }
 
 async function loadFeed(){
@@ -871,7 +902,7 @@ function pickTone(el,tone){document.querySelectorAll('.tnc').forEach(c=>c.classL
 function saveTone(){S.tex=document.getElementById('tone-ex').value;S.tctx=document.getElementById('tone-ctx').value;if(S.p)db.ref('users/'+S.p.uid+'/tone').set({style:S.tone,example:S.tex,context:S.tctx});const ok=document.getElementById('tone-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('🎯 Tone: '+S.tone,'ok');}
 function loadToneDB(){if(!S.p)return;db.ref('users/'+S.p.uid+'/tone').once('value',snap=>{if(!snap.exists())return;const d=snap.val();S.tone=d.style||'aggressive';S.tex=d.example||'';S.tctx=d.context||'';document.querySelectorAll('.tnc').forEach(c=>c.classList.remove('on'));const tc=document.getElementById('tc-'+S.tone);if(tc)tc.classList.add('on');if(d.example)document.getElementById('tone-ex').value=d.example;if(d.context)document.getElementById('tone-ctx').value=d.context;});}
 
-function saveCfg(){const gem=document.getElementById('cfg-gem').value.trim(),cla=document.getElementById('cfg-cla').value.trim();if(!gem){toast('⚠ Enter Gemini API key','err');return;}S.gk=gem;S.ck=cla;db.ref('settings/config').set({geminiKey:gem,claudeKey:cla}).then(()=>{updateSP();const ok=document.getElementById('cfg-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('✅ Saved! Testing...','ok');testGem();});}
+function saveCfg(){const rawGem=document.getElementById('cfg-gem').value.trim(),gem=cleanGemKey(rawGem),cla=document.getElementById('cfg-cla').value.trim();if(!gem){toast(rawGem?'⚠ Invalid/blocked Gemini key. Paste a new AI Studio key':'⚠ Enter Gemini API key','err');return;}S.gk=gem;S.ck=cla;document.getElementById('cfg-gem').value=gem;db.ref('settings/config').set({geminiKey:gem,claudeKey:cla}).then(()=>{updateSP();const ok=document.getElementById('cfg-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('✅ Saved! Testing...','ok');testGem();});}
 async function testGem(){try{const r=await callAI('Reply OK');if(r)toast('✦ Gemini connected!','ok');}catch(e){toast('⚠ Key failed: '+e.message,'err');}}
 function changePw(){const pw=document.getElementById('cfg-pw').value;if(!pw||pw.length<4){toast('⚠ Min 4 chars','err');return;}db.ref('users/'+S.p.uid).update({password:pw}).then(()=>{document.getElementById('cfg-pw').value='';const ok=document.getElementById('pw-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('🔒 Password changed!','ok');});}
 function updateSP(){const sp=document.getElementById('sp-gem'),sl=document.getElementById('sl-gem');if(S.gk){sp.className='spl sp-ok';sl.textContent='GEMINI: Connected';}else{sp.className='spl sp-w';sl.textContent='GEMINI: Not set';}}
