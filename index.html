@@ -568,7 +568,7 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--t1)
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBgLPlI2hMWXvf6IxXQiFeNZ_4mS3fNXBs",authDomain:"ubc-news-studio-27a58.firebaseapp.com",databaseURL:"https://ubc-news-studio-27a58-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ubc-news-studio-27a58",storageBucket:"ubc-news-studio-27a58.firebasestorage.app",messagingSenderId:"198115979934",appId:"1:198115979934:web:d7e6b56f447f086145018f"});
 const db=firebase.database();
-const GU='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
+const GU='https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','reports','tone','settings'],editor:['dashboard','production','tasks','chat','settings'],anchor:['dashboard','production','tasks','chat','settings']};
 let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null};
@@ -634,9 +634,18 @@ function setAI(ai){S.ai=ai;document.getElementById('ai-gem').classList.toggle('o
 
 async function callAI(prompt){
   if(!S.gk)throw new Error('Add Gemini API key in Settings first');
-  const r=await fetch(GU+'?key='+S.gk,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.8,maxOutputTokens:2500}})});
-  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API Error '+r.status);}
-  const d=await r.json();return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  const models=['gemini-1.5-flash','gemini-2.0-flash-lite','gemini-1.5-pro','gemini-pro'];
+  for(const model of models){
+    try{
+      const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+S.gk;
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.8,maxOutputTokens:2500}})});
+      const d=await r.json();
+      if(r.ok) return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+      const msg=d.error?.message||'';
+      if(!msg.includes('not found')&&!msg.includes('no longer available')&&!msg.includes('deprecated')) throw new Error(msg);
+    }catch(e){if(e.message&&!e.message.includes('not found')&&!e.message.includes('no longer available')) throw e;}
+  }
+  throw new Error('No working Gemini model found. Check API key.');}
 }
 
 async function loadFeed(){
