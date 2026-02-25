@@ -563,7 +563,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
             <div class="scard"><div class="sct">✦ GEMINI API KEY</div><label class="sl2">Paste your API key</label><input class="si" type="password" id="cfg-gem" placeholder="AIzaSy..."><button class="bsv" onclick="saveCfg()">SAVE & TEST</button><span id="cfg-ok" style="display:none;margin-left:7px;color:var(--grn);font-size:9px;font-weight:700;">✓ SAVED</span></div>
             <div class="scard"><div class="sct">◈ CLAUDE API (Optional)</div><label class="sl2">Claude API key</label><input class="si" type="password" id="cfg-cla" placeholder="sk-ant-..."><button class="bsv" onclick="saveCfg()">SAVE</button></div>
             <div class="scard"><div class="sct">🔒 CHANGE PASSWORD</div><label class="sl2">New password</label><input class="si" type="password" id="cfg-pw" placeholder="Min 4 characters"><button class="bsv" onclick="changePw()">UPDATE</button><span id="pw-ok" style="display:none;margin-left:7px;color:var(--grn);font-size:9px;font-weight:700;">✓ CHANGED</span></div>
-            <div class="scard"><div class="sct">ℹ️ ACCOUNT INFO</div><div style="font-size:11px;color:var(--t2);line-height:2.2;">Name: <strong id="si-name" style="color:var(--t1);">—</strong><br>Username: <strong id="si-user" style="color:var(--t1);">—</strong><br>Role: <strong id="si-role" style="color:var(--t1);">—</strong><br>Team: <strong id="si-mem" style="color:var(--t1);">—</strong> members</div></div>
+            <div class="scard"><div class="sct">ℹ️ ACCOUNT INFO</div><div style="font-size:11px;color:var(--t2);line-height:2.2;">Name: <strong id="si-name" style="color:var(--t1);">—</strong><br>Username: <strong id="si-user" style="color:var(--t1);">—</strong><br>Role: <strong id="si-role" style="color:var(--t1);">—</strong><br>Team: <strong id="si-mem" style="color:var(--t1);">—</strong> members</div><label class="sl2" style="margin-top:10px;">Display Name</label><input class="si" type="text" id="cfg-name" placeholder="Your name"><button class="bsv" onclick="updateProfile()">UPDATE NAME</button></div>
           </div>
         </div>
 
@@ -686,6 +686,7 @@ function init(){
   document.querySelectorAll('.nbb').forEach(b=>{const id=b.id.replace('nb-','');b.style.display=allowed.includes(id)?'flex':'none';});
   document.getElementById('btn-add-m').style.display=p.role==='admin'?'block':'none';
   document.getElementById('cfg-gem').value=S.gk;
+  const nm=document.getElementById('cfg-name');if(nm)nm.value=p.name||'';
   updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();listenGenHistory();renderFeedHistory();
 }
 
@@ -802,7 +803,7 @@ function cleanHeadline(s){
 }
 
 function rssSearchUrl(query){
-  return 'https://news.google.com/rss/search?q='+encodeURIComponent(query)+'&hl=en-IN&gl=IN&ceid=IN:en';
+  return 'https://news.google.com/rss/search?q='+encodeURIComponent(query)+'&hl=hi-IN&gl=IN&ceid=IN:hi';
 }
 
 function pickPriority(cat,ts){
@@ -953,16 +954,38 @@ async function translateNewsToHindi(items){
   const out=items.map(x=>({...x}));
   const need=out.filter(n=>!hasHindiText(n.headline));
   if(!need.length||!S.gk)return out;
-  const size=12;
+  const size=10;
   for(let i=0;i<need.length;i+=size){
-    const part=need.slice(i,i+size).map(n=>({id:n.id,headline:n.headline,summary:n.summary}));
-    const prompt=`Translate each item to natural Hindi news language. Keep intent same. Return ONLY valid JSON array with id, headline, summary. Do not change ids.\nInput:\n${JSON.stringify(part)}`;
+    const part=need.slice(i,i+size);
+    const lines=part.map((n,idx)=>`${idx+1}||${n.headline}||${n.summary||''}`).join('\n');
+    const prompt=`Translate each line into natural Hindi news language. Keep same order and same index.
+Return ONLY plain lines in exact format:
+index||Hindi headline||Hindi summary
+No markdown.
+Input:
+${lines}`;
     try{
-      const txt=await callAI(prompt,{json:true,temp:0.2,maxTokens:2600});
-      const arr=parseFeedJson(txt);
-      if(!arr||!arr.length)continue;
-      const map=new Map(arr.map(a=>[String(a.id),a]));
-      out.forEach(n=>{const t=map.get(String(n.id));if(t){if(t.headline)n.headline=String(t.headline).trim();if(t.summary)n.summary=String(t.summary).trim();}});
+      const txt=await callAI(prompt,{temp:0.2,maxTokens:2600});
+      const got=String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.replace(/^\d+[\).\-\s]*/,'')).map(l=>l.split('||').map(x=>x.trim())).filter(a=>a.length>=3);
+      got.forEach(a=>{
+        const idx=Math.max(0,parseInt(a[0],10)-1);
+        const n=part[idx];
+        if(!n)return;
+        const t=out.find(x=>x.id===n.id);
+        if(t){
+          if(a[1])t.headline=a[1];
+          if(a[2])t.summary=a[2];
+        }
+      });
+    }catch(_){}
+  }
+  const remain=out.filter(n=>!hasHindiText(n.headline)).slice(0,8);
+  for(const n of remain){
+    try{
+      const t=await callAI(`Translate to Hindi news style. Return only: headline||summary\n${n.headline}||${n.summary||''}`,{temp:0.2,maxTokens:500});
+      const p=String(t||'').split('||').map(x=>x.trim());
+      if(p[0])n.headline=p[0];
+      if(p[1])n.summary=p[1];
     }catch(_){}
   }
   return out;
@@ -1326,7 +1349,7 @@ function openAddMember(){['nm-name','nm-user','nm-pass'].forEach(id=>document.ge
 function addMember(){
   const name=document.getElementById('nm-name').value.trim(),username=document.getElementById('nm-user').value.trim().toLowerCase(),password=document.getElementById('nm-pass').value,role=document.getElementById('nm-role').value;
   if(!name||!username||!password){toast('⚠ Fill all fields','err');return;}if(password.length<4){toast('⚠ Min 4 chars','err');return;}
-  db.ref('users').orderByChild('username').equalTo(username).once('value',snap=>{if(snap.exists()){toast('⚠ Username taken','err');return;}db.ref('users').push({name,username,password,role,active:true,createdAt:Date.now(),lastSeen:0}).then(()=>{closeModal('add-modal');toast('✅ '+name+' added!','ok');logA('New: '+name+' ('+role+')','👥');});});
+  db.ref('users').orderByChild('username').equalTo(username).once('value',snap=>{if(snap.exists()){toast('⚠ Username taken','err');return;}db.ref('users').push({name,username,password,role,active:true,createdAt:Date.now(),lastSeen:0}).then(()=>{closeModal('add-modal');toast('✅ '+name+' added!','ok');logA('New: '+name+' ('+role+')','👥');}).catch(e=>toast('❌ Add failed: '+e.message,'err'));});
 }
 function removeMem(uid,name){if(!confirm('Remove '+name+'?'))return;db.ref('users/'+uid).remove().then(()=>{toast('🗑 '+name+' removed','ok');logA(name+' removed','🗑');});}
 
@@ -1438,6 +1461,18 @@ function exportCSV(){if(!window._rep?.length){toast('⚠ Load reports first','er
 function pickTone(el,tone){document.querySelectorAll('.tnc').forEach(c=>c.classList.remove('on'));el.classList.add('on');S.tone=tone;}
 function saveTone(){S.tex=document.getElementById('tone-ex').value;S.tctx=document.getElementById('tone-ctx').value;if(S.p)db.ref('users/'+S.p.uid+'/tone').set({style:S.tone,example:S.tex,context:S.tctx});const ok=document.getElementById('tone-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('🎯 Tone: '+S.tone,'ok');}
 function loadToneDB(){if(!S.p)return;db.ref('users/'+S.p.uid+'/tone').once('value',snap=>{if(!snap.exists())return;const d=snap.val();S.tone=d.style||'aggressive';S.tex=d.example||'';S.tctx=d.context||'';document.querySelectorAll('.tnc').forEach(c=>c.classList.remove('on'));const tc=document.getElementById('tc-'+S.tone);if(tc)tc.classList.add('on');if(d.example)document.getElementById('tone-ex').value=d.example;if(d.context)document.getElementById('tone-ctx').value=d.context;});}
+
+function updateProfile(){
+  const name=document.getElementById('cfg-name')?.value.trim();
+  if(!name||name.length<2){toast('⚠ Enter valid name','err');return;}
+  db.ref('users/'+S.p.uid).update({name}).then(()=>{
+    S.p.name=name;
+    document.getElementById('u-nm').textContent=name;
+    document.getElementById('si-name').textContent=name;
+    const av=document.getElementById('u-av');if(av)av.textContent=name[0].toUpperCase();
+    toast('✅ Name updated','ok');
+  }).catch(e=>toast('❌ '+e.message,'err'));
+}
 
 function saveCfg(){const rawGem=document.getElementById('cfg-gem').value.trim(),gem=cleanGemKey(rawGem),cla=document.getElementById('cfg-cla').value.trim();if(!gem){toast(rawGem?'⚠ Invalid/blocked Gemini key. Paste a new AI Studio key':'⚠ Enter Gemini API key','err');return;}S.gk=gem;S.ck=cla;document.getElementById('cfg-gem').value=gem;db.ref('settings/config').set({geminiKey:gem,claudeKey:cla}).then(()=>{updateSP();const ok=document.getElementById('cfg-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('✅ Saved! Testing...','ok');testGem();});}
 async function testGem(){try{const r=await callAI('Reply OK');if(r)toast('✦ Gemini connected!','ok');}catch(e){toast('⚠ Key failed: '+e.message,'err');}}
