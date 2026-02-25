@@ -638,11 +638,15 @@ function showTab(id){
 }
 function setAI(ai){S.ai=ai;document.getElementById('ai-gem').classList.toggle('on',ai==='gemini');document.getElementById('ai-cla').classList.toggle('on',ai==='claude');document.getElementById('ai-lbl').textContent=ai==='gemini'?'✦ GEMINI POWERED':'◈ CLAUDE POWERED';toast(ai==='gemini'?'Switched to Gemini':'Switched to Claude');}
 
-async function callAI(prompt){
+async function callAI(prompt,opts={}){
+  const json=opts.json===true;
+  const temp=typeof opts.temp==='number'?opts.temp:0.8;
+  const maxTokens=typeof opts.maxTokens==='number'?opts.maxTokens:2500;
   const key=(S.gk||'').trim();
   if(!key)throw new Error('Add Gemini API key in Settings first');
   if(!/^AIza[0-9A-Za-z_-]{20,}$/.test(key))throw new Error('Gemini key format looks invalid. Paste full key from Google AI Studio.');
-  const payload={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.8,maxOutputTokens:2500}};
+  const payload={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:temp,maxOutputTokens:maxTokens}};
+  if(json)payload.generationConfig.responseMimeType='application/json';
   let lastErr='Gemini request failed',sawQuota=false;
   const dyn=await getAvailableModels(key);
   const models=[...new Set([...dyn,...GM_PREF])];
@@ -695,16 +699,55 @@ function retryGem(status,msg){
   return status===404||status===429||l.includes('quota')||l.includes('rate limit')||l.includes('resource_exhausted')||l.includes('model not available');
 }
 
+function parseFeedJson(txt){
+  const clean=String(txt||'').replace(/```json|```/gi,'').trim();
+  if(!clean)return null;
+  try{
+    const d=JSON.parse(clean);
+    if(Array.isArray(d))return d;
+    if(Array.isArray(d.items))return d.items;
+    if(Array.isArray(d.news))return d.news;
+    if(Array.isArray(d.stories))return d.stories;
+  }catch(_){}
+  const m=clean.match(/\[[\s\S]*\]/);
+  if(!m)return null;
+  try{return JSON.parse(m[0]);}catch(_){return null;}
+}
+
+function normCat(v){
+  const c=String(v||'').toLowerCase().trim();
+  if(['bihar','odisha','national','politics','crime','economy','viral'].includes(c))return c;
+  return 'national';
+}
+
+function normPrio(v){
+  const p=String(v||'').toUpperCase().trim();
+  if(['HIGH','MEDIUM','LOW'].includes(p))return p;
+  return 'MEDIUM';
+}
+
+function normalizeFeedItem(n,i){
+  const x=(n&&typeof n==='object')?n:{};
+  return {
+    id:String(x.id||('n'+(i+1))),
+    headline:String(x.headline||x.title||'Breaking update').trim(),
+    summary:String(x.summary||x.context||'').trim(),
+    category:normCat(x.category),
+    priority:normPrio(x.priority),
+    source:String(x.source||'News').trim()
+  };
+}
+
 async function loadFeed(){
   const el=document.getElementById('news-list');
   el.innerHTML='<div class="empty"><div class="spn" style="margin:0 auto 8px;"></div><div class="em">LOADING NEWS...</div><div class="lbar" style="max-width:220px;margin:8px auto 0;"><div class="lbarf"></div></div></div>';
   const today=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
   const prompt=`News curator for UBC News Hindi (Bihar & Odisha focused). Today: ${today}. Compile 25 top India news stories. Priority order: Bihar > Odisha > National politics > Crime > Economy > Viral. Return ONLY valid JSON array, no markdown, no explanation: [{"id":"n1","headline":"Hindi headline","summary":"2 line English context","category":"bihar","priority":"HIGH","source":"Source name"}] Categories MUST be one of: bihar,odisha,national,politics,crime,economy,viral. Priority: HIGH=breaking/major, MEDIUM=important, LOW=general. Headlines MUST be in Hindi script. Return exactly 25 items.`;
   try{
-    const txt=await callAI(prompt);
-    const m=txt.replace(/```json|```/g,'').trim().match(/\[[\s\S]*\]/);
-    if(!m)throw new Error('Could not parse response. Check API key in Settings.');
-    S.news=JSON.parse(m[0]);S.fn=[...S.news];
+    const txt=await callAI(prompt,{json:true,temp:0.2,maxTokens:3500});
+    const arr=parseFeedJson(txt);
+    if(!arr||!arr.length)throw new Error('AI returned non-JSON. Please click Refresh News again.');
+    S.news=arr.slice(0,25).map((n,i)=>normalizeFeedItem(n,i));S.fn=[...S.news];
     renderFeed(S.fn);updateFS();startCD();
     toast('✅ '+S.news.length+' stories loaded!','ok');logA('News feed refreshed','📡');
   }catch(e){el.innerHTML='<div class="empty"><div class="ei">❌</div><div class="em">'+e.message+'</div></div>';toast('❌ '+e.message,'err');}
