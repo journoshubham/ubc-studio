@@ -568,7 +568,7 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--t1)
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBgLPlI2hMWXvf6IxXQiFeNZ_4mS3fNXBs",authDomain:"ubc-news-studio-27a58.firebaseapp.com",databaseURL:"https://ubc-news-studio-27a58-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ubc-news-studio-27a58",storageBucket:"ubc-news-studio-27a58.firebasestorage.app",messagingSenderId:"198115979934",appId:"1:198115979934:web:d7e6b56f447f086145018f"});
 const db=firebase.database();
-const GU='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GU='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent';
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','reports','tone','settings'],editor:['dashboard','production','tasks','chat','settings'],anchor:['dashboard','production','tasks','chat','settings']};
 let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null};
