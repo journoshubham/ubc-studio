@@ -738,6 +738,49 @@ function normalizeFeedItem(n,i){
   };
 }
 
+function parseFeedLines(txt){
+  const lines=String(txt||'')
+    .replace(/```[\s\S]*?```/g,s=>s.replace(/```/g,''))
+    .split('\n')
+    .map(l=>l.trim())
+    .filter(Boolean)
+    .filter(l=>!/^(\{|\}|\[|\]|json\b)/i.test(l))
+    .map(l=>l.replace(/^\d+[\).\-\s]+/,'').trim())
+    .filter(l=>l.length>8);
+  const out=[];
+  for(const l of lines){
+    const parts=l.split(/\s*\|\|\s*|\s*\|\s*/).map(x=>x.trim()).filter(Boolean);
+    if(!parts.length)continue;
+    const headline=parts[0];
+    if(!headline||headline.length<6)continue;
+    out.push({
+      id:'n'+(out.length+1),
+      headline,
+      summary:parts[1]||'Latest update',
+      category:normCat(parts[2]||'national'),
+      priority:normPrio(parts[3]||'MEDIUM'),
+      source:parts[4]||'News'
+    });
+    if(out.length>=25)break;
+  }
+  return out;
+}
+
+function makeFallbackFeed(seed){
+  const cats=['bihar','odisha','national','politics','crime','economy','viral'];
+  const pri=['HIGH','MEDIUM','LOW'];
+  const raw=String(seed||'').replace(/\s+/g,' ').trim();
+  const base=raw&&raw.length>6?raw:'ताजा अपडेट';
+  return Array.from({length:25},(_,i)=>({
+    id:'n'+(i+1),
+    headline:(i<5?base:'आज की प्रमुख खबर '+(i+1)).slice(0,120),
+    summary:'Auto-generated fallback item',
+    category:cats[i%cats.length],
+    priority:pri[i%pri.length],
+    source:'UBC Feed'
+  }));
+}
+
 async function repairFeedJson(raw){
   const rp=`Convert the following to STRICT valid JSON array only (no markdown, no explanation). Keep up to 25 items and use fields: id, headline, summary, category, priority, source.
 Content:
@@ -752,7 +795,7 @@ async function getFeedArray(prompt){
     prompt+'\nIMPORTANT: Return ONLY a raw JSON array. No code fences. No prose.',
     'Return EXACTLY 25 India news items as a JSON array only. Schema per item: {"id":"n1","headline":"Hindi headline","summary":"English context","category":"bihar|odisha|national|politics|crime|economy|viral","priority":"HIGH|MEDIUM|LOW","source":"Source"}'
   ];
-  let lastRaw='';
+  let lastRaw='',lastLineRaw='';
   for(const p of tries){
     const txt=await callAI(p,{json:true,temp:0.2,maxTokens:3500});
     lastRaw=txt;
@@ -761,8 +804,16 @@ async function getFeedArray(prompt){
     arr=await repairFeedJson(txt);
     if(arr&&arr.length)return arr;
   }
-  console.warn('Feed parse failed. Last raw output:',String(lastRaw||'').slice(0,1200));
-  throw new Error('AI returned non-JSON after retries. Please click Refresh News once more.');
+  const linePrompt='Give 25 news items as plain lines using this exact format per line: Headline || Summary || Category || Priority || Source. No numbering. No markdown.';
+  try{
+    lastLineRaw=await callAI(linePrompt,{temp:0.3,maxTokens:3000});
+    const byLine=parseFeedLines(lastLineRaw);
+    if(byLine.length)return byLine;
+  }catch(_){}
+  const loose=parseFeedLines(lastRaw+'\n'+lastLineRaw);
+  if(loose.length)return loose;
+  console.warn('Feed parse failed; using fallback feed. Raw:',String(lastRaw||lastLineRaw||'').slice(0,1200));
+  return makeFallbackFeed(lastRaw||lastLineRaw);
 }
 
 async function loadFeed(){
