@@ -476,6 +476,10 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
             <span style="font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;" id="prod-info">No content loaded</span>
           </div>
           <div class="pg">
+            <div class="pp full">
+              <div class="ppl">🗂 GENERATED ITEMS (LATEST FIRST)<button class="ib st" style="padding:3px 8px;font-size:8px;" onclick="showTab('generate')">OPEN FULL</button></div>
+              <div class="ghl" id="prod-hist"></div>
+            </div>
             <div class="pp full"><div class="ppl">🎙 VO SCRIPT<button class="bcp" onclick="cpF('pf-vo')">COPY</button></div><textarea class="pta" id="pf-vo" rows="7" placeholder="VO script appears after generation..."></textarea></div>
             <div class="pp"><div class="ppl">📺 VIDEO HEADER<button class="bcp" onclick="cpF('pf-hdr')">COPY</button></div><textarea class="pta" id="pf-hdr" rows="3"></textarea></div>
             <div class="pp"><div class="ppl">🏷 SMALL HEADER<button class="bcp" onclick="cpF('pf-sh')">COPY</button></div><textarea class="pta" id="pf-sh" rows="3"></textarea></div>
@@ -629,28 +633,31 @@ const db=firebase.database();
 const GAPI_MODELS='https://generativelanguage.googleapis.com/v1beta/models';
 const GAPI_GENERATE='https://generativelanguage.googleapis.com/v1beta/models/';
 const GM_PREF=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash-latest','gemini-1.5-flash'];
-const FEED_LIMIT=50;
+const FEED_LIMIT=75;
 const FEED_MIN_NEW=18;
 const FEED_RECENT_MIN=60;
 const FEED_BACKFILL_MIN=360;
 const RSS_PROXY='https://api.allorigins.win/raw?url=';
 const LS_THEME='ubc_theme_v1';
 const LS_FEED_BATCH='ubc_feed_batches_v1';
+const LS_KNOWN_USERS='ubc_known_users_v1';
+const FEED_ARCHIVE_PATH='feedArchive';
+const FEED_ARCHIVE_MAX=80;
 const FEED_BUCKETS=[
-  {category:'national',count:18,query:'(India OR "Government of India" OR Parliament OR Supreme Court) when:1h'},
-  {category:'odisha',count:8,query:'(Odisha OR Bhubaneswar OR Cuttack OR Puri) when:2h'},
-  {category:'north_india',count:7,query:'("North India" OR Delhi OR "Uttar Pradesh" OR Punjab OR Haryana OR Rajasthan OR Uttarakhand OR Himachal) when:2h'},
-  {category:'world',count:6,query:'("World news" OR international OR diplomacy OR conflict) when:1h'},
-  {category:'entertainment',count:5,query:'(Bollywood OR "Indian entertainment" OR celebrity OR film) when:3h'},
-  {category:'politics',count:2,query:'("India politics" OR election OR parliament) when:2h'},
-  {category:'economy',count:2,query:'("India economy" OR inflation OR market OR rupee) when:2h'},
-  {category:'crime',count:1,query:'("India crime" OR police OR court) when:2h'},
+  {category:'national',count:26,query:'(India OR "Government of India" OR Parliament OR Supreme Court) when:1h'},
+  {category:'odisha',count:12,query:'(Odisha OR Bhubaneswar OR Cuttack OR Puri) when:2h'},
+  {category:'north_india',count:10,query:'("North India" OR Delhi OR "Uttar Pradesh" OR Punjab OR Haryana OR Rajasthan OR Uttarakhand OR Himachal) when:2h'},
+  {category:'world',count:9,query:'("World news" OR international OR diplomacy OR conflict) when:1h'},
+  {category:'entertainment',count:8,query:'(Bollywood OR "Indian entertainment" OR celebrity OR film) when:3h'},
+  {category:'politics',count:4,query:'("India politics" OR election OR parliament) when:2h'},
+  {category:'economy',count:3,query:'("India economy" OR inflation OR market OR rupee) when:2h'},
+  {category:'crime',count:2,query:'("India crime" OR police OR court) when:2h'},
   {category:'bihar',count:1,query:'(Bihar) when:3h'}
 ];
 const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],editor:['dashboard','production','tasks','chat','team','settings'],anchor:['dashboard','production','tasks','chat','team','settings']};
-let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null,feedBatches:[],activeFeed:'live',genHist:[]};
+let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[]};
 
 function cleanGemKey(key){const k=(key||'').trim();return LEGACY_GEM_KEYS.has(k)?'':k;}
 function firstRun(){db.ref('users').orderByChild('role').equalTo('admin').once('value',s=>{if(s.exists())return;db.ref('users').push({name:'Admin',username:'admin',password:'ubc@2025',role:'admin',active:true,createdAt:Date.now(),lastSeen:0});db.ref('settings/config').set({geminiKey:'',claudeKey:''});});}
@@ -658,12 +665,23 @@ function sanitizeCfg(){db.ref('settings/config').once('value',s=>{if(!s.exists()
 function setTheme(mode){const light=mode==='light';document.body.classList.toggle('light',light);localStorage.setItem(LS_THEME,light?'light':'dark');const b=document.getElementById('th-btn');if(b)b.textContent=light?'🌙 DARK':'☀ LIGHT';}
 function toggleTheme(){setTheme(document.body.classList.contains('light')?'dark':'light');}
 function applySavedTheme(){setTheme(localStorage.getItem(LS_THEME)==='light'?'light':'dark');}
-function loadFeedBatches(){try{const raw=localStorage.getItem(LS_FEED_BATCH);const arr=raw?JSON.parse(raw):[];if(Array.isArray(arr))S.feedBatches=arr.slice(0,25);}catch(_){S.feedBatches=[];}}
-function saveFeedBatches(){try{localStorage.setItem(LS_FEED_BATCH,JSON.stringify((S.feedBatches||[]).slice(0,25)));}catch(_){}}
+function loadFeedBatches(){try{const raw=localStorage.getItem(LS_FEED_BATCH);const arr=raw?JSON.parse(raw):[];if(Array.isArray(arr))S.feedBatches=arr.slice(0,FEED_ARCHIVE_MAX);}catch(_){S.feedBatches=[];}}
+function saveFeedBatches(){try{localStorage.setItem(LS_FEED_BATCH,JSON.stringify((S.feedBatches||[]).slice(0,FEED_ARCHIVE_MAX)));}catch(_){}}
+function loadKnownUsers(){try{const raw=localStorage.getItem(LS_KNOWN_USERS);const arr=raw?JSON.parse(raw):[];if(Array.isArray(arr))S.knownUsers=arr.map(x=>String(x||'').trim().toLowerCase()).filter(Boolean).slice(0,120);}catch(_){S.knownUsers=[];}}
+function saveKnownUsers(){try{localStorage.setItem(LS_KNOWN_USERS,JSON.stringify((S.knownUsers||[]).slice(0,120)));}catch(_){}}
+function rememberKnownUser(username){
+  const u=String(username||'').trim().toLowerCase();
+  if(!u)return;
+  const set=new Set([...(S.knownUsers||[]),u]);
+  S.knownUsers=[...set].slice(-120);
+  saveKnownUsers();
+}
+function rememberKnownMember(m){if(m?.username)rememberKnownUser(m.username);}
 firstRun();
 sanitizeCfg();
 applySavedTheme();
 loadFeedBatches();
+loadKnownUsers();
 
 function doLogin(){
   const u=document.getElementById('l-user').value.trim().toLowerCase(),p=document.getElementById('l-pass').value;
@@ -674,6 +692,7 @@ function doLogin(){
     if(d.password!==p){se('Wrong password');return;}
     if(d.active===false){se('Account disabled');return;}
     S.p={...d,uid};
+    rememberKnownUser(S.p.username);
     db.ref('settings/config').once('value',cs=>{
       if(cs.exists()){const v=cs.val();S.gk=cleanGemKey(v.geminiKey);S.ck=v.claudeKey||'';}
       db.ref('users/'+uid+'/lastSeen').set(Date.now());
@@ -686,7 +705,7 @@ function doLogin(){
 function se(m){const e=document.getElementById('l-err');e.textContent='⚠ '+m;setTimeout(()=>e.textContent='',3000);}
 function doLogout(){
   if(S.p)db.ref('users/'+S.p.uid+'/lastSeen').set(Date.now());
-  db.ref('tasks').off();db.ref('messages').off();db.ref('notifications').off();S.p=null;
+  db.ref('tasks').off();db.ref('messages').off();db.ref('notifications').off();stopTeamListener();stopFeedArchiveListener();stopChatListener();S.p=null;
   document.getElementById('app').classList.remove('on');document.getElementById('app').style.display='none';
   document.getElementById('lg').style.display='flex';
   document.getElementById('l-user').value='';document.getElementById('l-pass').value='';
@@ -694,6 +713,7 @@ function doLogout(){
 
 function init(){
   const p=S.p;
+  rememberKnownMember(p);
   document.getElementById('u-nm').textContent=p.name||p.username;
   document.getElementById('u-rl').textContent=p.role.toUpperCase();
   document.getElementById('si-name').textContent=p.name||p.username;
@@ -705,7 +725,7 @@ function init(){
   document.getElementById('btn-add-m').style.display=p.role==='admin'?'block':'none';
   document.getElementById('cfg-gem').value=S.gk;
   const nm=document.getElementById('cfg-name');if(nm)nm.value=p.name||'';
-  updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();listenGenHistory();renderFeedHistory();
+  updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();listenGenHistory();listenFeedArchive();renderFeedHistory();
 }
 
 const TTL={dashboard:'DASHBOARD',feed:'LIVE NEWS FEED',generate:'GENERATE CONTENT',production:'PRODUCTION SHEET',tasks:'TASK MANAGER',chat:'TEAM CHAT',team:'TEAM MANAGEMENT',reports:'REPORTS',tone:'TONE & STYLE',settings:'SETTINGS'};
@@ -717,7 +737,8 @@ function showTab(id){
   document.getElementById('tb-ttl').textContent=TTL[id]||id.toUpperCase();
   if(id==='chat'){loadChat();document.getElementById('cb').classList.remove('on');}
   if(id==='tasks')renderTasks(S.tasks);
-  if(id==='team')renderTeam();
+  if(id==='team'){renderTeam();renderTeamDirectory(S.team);}
+  if(id==='production')renderProdHistory();
   if(id==='dashboard')loadDash();
 }
 function setAI(ai){S.ai=ai;document.getElementById('ai-gem').classList.toggle('on',ai==='gemini');document.getElementById('ai-cla').classList.toggle('on',ai==='claude');document.getElementById('ai-lbl').textContent=ai==='gemini'?'✦ GEMINI POWERED':'◈ CLAUDE POWERED';toast(ai==='gemini'?'Switched to Gemini':'Switched to Claude');}
@@ -919,13 +940,46 @@ function getBaseFeed(){
   return b?.items||S.news||[];
 }
 
+let feedArchiveRef=null,feedArchiveCb=null;
+function stopFeedArchiveListener(){if(feedArchiveRef&&feedArchiveCb)feedArchiveRef.off('value',feedArchiveCb);feedArchiveRef=null;feedArchiveCb=null;}
+function normalizeFeedBatch(raw,id){
+  const b=(raw&&typeof raw==='object')?raw:{};
+  const items=Array.isArray(b.items)?b.items.slice(0,FEED_LIMIT):[];
+  return {id:id||String(b.id||('b_'+Date.now())),ts:Number(b.ts)||Date.now(),count:Number(b.count)||items.length,items};
+}
+function setFeedBatches(rows){
+  const map=new Map();
+  (rows||[]).forEach(r=>{
+    const b=normalizeFeedBatch(r,r?.id);
+    if(!b.id||!b.items.length)return;
+    map.set(b.id,b);
+  });
+  S.feedBatches=[...map.values()].sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,FEED_ARCHIVE_MAX);
+  saveFeedBatches();
+  renderFeedHistory();
+  if(S.activeFeed!=='live'&&!S.feedBatches.some(b=>b.id===S.activeFeed)){
+    S.activeFeed='live';
+    S.fn=[...(S.news||[])];
+    renderFeed(S.fn);updateFS(S.fn);
+  }
+}
+function listenFeedArchive(){
+  stopFeedArchiveListener();
+  feedArchiveRef=db.ref(FEED_ARCHIVE_PATH).limitToLast(FEED_ARCHIVE_MAX);
+  feedArchiveCb=snap=>{
+    const fromDb=[];snap.forEach(c=>fromDb.push(normalizeFeedBatch(c.val(),c.key)));
+    const merged=[...fromDb,...(S.feedBatches||[])];
+    setFeedBatches(merged);
+  };
+  feedArchiveRef.on('value',feedArchiveCb,e=>console.warn('feed archive listener failed',e));
+}
 function archiveCurrentFeed(){
   const cur=S.news||[];
   if(!cur.length)return;
   const id='b_'+Date.now();
-  S.feedBatches=[{id,ts:Date.now(),count:cur.length,items:cur.slice(0,FEED_LIMIT)},...(S.feedBatches||[])].slice(0,25);
-  saveFeedBatches();
-  renderFeedHistory();
+  const batch={id,ts:Date.now(),count:cur.length,items:cur.slice(0,FEED_LIMIT)};
+  setFeedBatches([batch,...(S.feedBatches||[])]);
+  db.ref(FEED_ARCHIVE_PATH+'/'+id).set(batch).catch(e=>console.warn('feed archive save failed',e));
 }
 
 function fmtBatchTime(ts){
@@ -955,6 +1009,7 @@ function deleteFeedBatch(id){
   S.feedBatches=(S.feedBatches||[]).filter(b=>b.id!==id);
   if(S.activeFeed===id)S.activeFeed='live';
   saveFeedBatches();renderFeedHistory();
+  db.ref(FEED_ARCHIVE_PATH+'/'+id).remove().catch(e=>console.warn('feed archive delete failed',e));
 }
 
 function showLiveFeed(){
@@ -1327,11 +1382,25 @@ function fillProd(data){
 }
 function copyAll(){let txt='=== UBC NEWS HINDI — CONTENT PACKAGE ===\n\n';document.querySelectorAll('.oc').forEach(c=>{const l=c.querySelector('.ocl').textContent.trim();const b=c.querySelector('.ocb').textContent.trim();txt+='--- '+l+' ---\n'+b+'\n\n';});navigator.clipboard.writeText(txt).then(()=>toast('📋 All copied!','ok'));}
 function openAssignModal(){if(!S.gd){toast('⚠ Generate content first','err');return;}S.asgn={type:'generated',data:S.gd};document.getElementById('modal-story').textContent=S.gd._story?.headline||'Generated content';fillAsn();document.getElementById('assign-modal').classList.add('on');}
-function fillAsn(){const sel=document.getElementById('modal-assignee');sel.innerHTML='<option value="">Select member...</option>';S.team.filter(m=>m.role!=='admin').forEach(m=>{sel.innerHTML+=`<option value="${m.uid}">${m.name||m.username} (${m.role})</option>`;});}
+function fillAsn(){
+  const sel=document.getElementById('modal-assignee');
+  const members=getAssignableMembers();
+  sel.innerHTML='<option value="">Select member...</option>';
+  members.forEach(m=>{sel.innerHTML+=`<option value="${m.uid}">${m.name||m.username} (${m.role})</option>`;});
+  if(!members.length){
+    sel.innerHTML='<option value="">No members found (syncing...)</option>';
+    hydrateTeamFallback(true).then(()=>{
+      const next=getAssignableMembers();
+      sel.innerHTML='<option value="">Select member...</option>';
+      next.forEach(m=>{sel.innerHTML+=`<option value="${m.uid}">${m.name||m.username} (${m.role})</option>`;});
+      if(!next.length)sel.innerHTML='<option value="">No members found</option>';
+    });
+  }
+}
 function confirmAssign(){
   const uid=document.getElementById('modal-assignee').value,fmt=document.getElementById('modal-fmt').value,note=document.getElementById('modal-note').value;
   if(!uid){toast('⚠ Select a member','err');return;}
-  const member=S.team.find(m=>m.uid===uid);if(!member)return;
+  const member=getAllMembers().find(m=>m.uid===uid);if(!member){toast('⚠ Member not loaded. Open Team tab once and retry','err');return;}
   const headline=S.asgn?.type==='generated'?S.asgn.data?._story?.headline||'Content task':S.asgn?.story?.headline||'News task';
   const task={headline,format:fmt,note:note||'',assignedTo:uid,assignedToName:member.name||member.username,assignedBy:S.p?.uid,assignedByName:S.p?.name||S.p?.username,status:'pending',createdAt:Date.now(),date:new Date().toISOString().split('T')[0],category:S.asgn?.story?.category||S.story?.category||'general',vo:S.asgn?.data?.VO_SCRIPT||'',ytTitle:S.asgn?.data?.YOUTUBE_TITLE||''};
   db.ref('tasks').push(task).then(()=>{sendNotif(uid,'task','Task: '+headline.substring(0,60));closeModal('assign-modal');toast('✅ Assigned to '+(member.name||member.username),'ok');logA('Task assigned to '+(member.name||member.username),'📋');});
@@ -1377,7 +1446,96 @@ function normalizeMember(m,uid){
   const role=['admin','producer','editor','anchor'].includes(String(raw.role||''))?String(raw.role):'producer';
   return {...raw,uid,name,username,role,lastSeen:raw.lastSeen||0,active:raw.active!==false};
 }
-function loadTeam(){db.ref('users').on('value',snap=>{S.team=[];snap.forEach(c=>S.team.push(normalizeMember(c.val(),c.key)));document.getElementById('si-mem').textContent=S.team.length;renderTeam();renderTeamDirectory(S.team);buildDM();});}
+function usersFromSnap(snap){
+  const rows=[];if(!snap||!snap.exists())return rows;
+  const v=snap.val();
+  if(v&&typeof v==='object'&&!Array.isArray(v)&&(v.username||v.name||v.role||v.password!==undefined)){rows.push(normalizeMember(v,snap.key));return rows;}
+  snap.forEach(c=>rows.push(normalizeMember(c.val(),c.key)));
+  return rows;
+}
+function dedupeMembers(list){
+  const byUid=new Map();const byUser=new Map();
+  (list||[]).forEach(m=>{
+    if(!m)return;
+    const row=normalizeMember(m,m.uid||m.id||'');
+    if(row.username)rememberKnownUser(row.username);
+    const prev=row.uid?byUid.get(row.uid):byUser.get(row.username||'');
+    const merged=prev?{...prev,...row,lastSeen:Math.max(prev.lastSeen||0,row.lastSeen||0),active:prev.active!==false&&row.active!==false}:row;
+    if(merged.uid)byUid.set(merged.uid,merged);
+    if(merged.username)byUser.set(merged.username,merged);
+  });
+  const rows=[...byUid.values()];
+  byUser.forEach(v=>{if(!rows.some(x=>x.uid===v.uid||x.username===v.username))rows.push(v);});
+  rows.sort((a,b)=>{
+    if(a.uid===S.p?.uid)return-1;
+    if(b.uid===S.p?.uid)return 1;
+    if(a.role==='admin'&&b.role!=='admin')return-1;
+    if(b.role==='admin'&&a.role!=='admin')return 1;
+    return String(a.name||a.username).localeCompare(String(b.name||b.username));
+  });
+  return rows;
+}
+function getAllMembers(){
+  const me=S.p?normalizeMember(S.p,S.p.uid):null;
+  return dedupeMembers([...(S.team||[]),...(me?[me]:[])]);
+}
+function getAssignableMembers(){return getAllMembers().filter(m=>m.uid&&m.uid!==S.p?.uid&&m.role!=='admin'&&m.active!==false);}
+function refreshTeamViews(){
+  S.team=getAllMembers();
+  const mem=document.getElementById('si-mem');if(mem)mem.textContent=S.team.length;
+  renderTeam();
+  renderTeamDirectory(S.team);
+  buildDM();
+  const rf=document.getElementById('rf-mem');
+  if(rf){
+    const prev=rf.value||'all';
+    rf.innerHTML='<option value="all">All Members</option>';
+    S.team.forEach(m=>{if(m.uid)rf.innerHTML+=`<option value="${m.uid}">${m.name||m.username}</option>`;});
+    if([...rf.options].some(o=>o.value===prev))rf.value=prev;
+  }
+}
+let teamRef=null,teamCb=null,teamHydrating=false;
+function stopTeamListener(){if(teamRef&&teamCb)teamRef.off('value',teamCb);teamRef=null;teamCb=null;}
+async function hydrateTeamFallback(force){
+  if(teamHydrating&&!force)return;
+  teamHydrating=true;
+  try{
+    const uidSet=new Set();
+    const userSet=new Set((S.knownUsers||[]).map(x=>String(x||'').trim().toLowerCase()).filter(Boolean));
+    if(S.p?.uid)uidSet.add(S.p.uid);
+    if(S.p?.username)userSet.add(String(S.p.username).trim().toLowerCase());
+    (S.team||[]).forEach(m=>{if(m?.uid)uidSet.add(m.uid);if(m?.username)userSet.add(String(m.username).toLowerCase());});
+    const [tRes,mRes]=await Promise.allSettled([db.ref('tasks').limitToLast(300).once('value'),db.ref('messages/general').limitToLast(300).once('value')]);
+    if(tRes.status==='fulfilled'){tRes.value.forEach(c=>{const t=c.val()||{};if(t.assignedTo)uidSet.add(t.assignedTo);if(t.assignedBy)uidSet.add(t.assignedBy);});}
+    if(mRes.status==='fulfilled'){mRes.value.forEach(c=>{const m=c.val()||{};if(m.uid)uidSet.add(m.uid);});}
+    const qs=[];
+    ['admin','producer','editor','anchor'].forEach(r=>qs.push(db.ref('users').orderByChild('role').equalTo(r).once('value')));
+    [...uidSet].slice(0,120).forEach(uid=>qs.push(db.ref('users/'+uid).once('value')));
+    [...userSet].slice(0,120).forEach(u=>qs.push(db.ref('users').orderByChild('username').equalTo(u).once('value')));
+    const settled=await Promise.allSettled(qs);
+    const extra=[];
+    settled.forEach(s=>{if(s.status==='fulfilled')extra.push(...usersFromSnap(s.value));});
+    if(extra.length){
+      S.team=dedupeMembers([...(S.team||[]),...extra]);
+      refreshTeamViews();
+    }
+  }catch(e){console.warn('team fallback failed',e);}
+  teamHydrating=false;
+}
+function loadTeam(){
+  stopTeamListener();
+  if(S.p)S.team=dedupeMembers([...(S.team||[]),normalizeMember(S.p,S.p.uid)]);
+  refreshTeamViews();
+  teamRef=db.ref('users');
+  teamCb=snap=>{
+    const rows=usersFromSnap(snap);
+    S.team=dedupeMembers([...(S.team||[]),...rows]);
+    refreshTeamViews();
+    if(S.team.length<2)hydrateTeamFallback(false);
+  };
+  teamRef.on('value',teamCb,e=>{console.warn('team listener failed',e);hydrateTeamFallback(true);});
+  hydrateTeamFallback(true);
+}
 function renderTeam(){
   const g=document.getElementById('team-grid');if(!S.team.length){g.innerHTML='<div class="empty"><div class="ei">👥</div><div class="em">No members yet</div></div>';return;}
   const colors=['#FF3366','#FFD700','#0EA5E9','#00E5A0','#A855F7','#EC4899','#FF8C00','#14B8A6'];
@@ -1399,15 +1557,15 @@ function renderTeam(){
 }
 function renderTeamDirectory(list){
   const el=document.getElementById('team-list');if(!el)return;
-  const rows=(list&&list.length?list:S.team)||[];
+  const rows=(Array.isArray(list)?list:getAllMembers())||[];
   if(!rows.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No members in directory</div></div>';return;}
   const canRm=S.p?.role==='admin';
   el.innerHTML=rows.map(m=>`<div class="tmi"><div class="tmr1"><div><div class="tmn">${esc(m.name||m.username||'Member')}</div><div class="tmu">@${esc(m.username||'')}</div></div><span class="mc-rl rl-${m.role}">${m.role.toUpperCase()}</span></div><div class="tmr2"><span class="tmu">UID: ${esc(String(m.uid||'').slice(0,8))}</span><span class="tmu">${m.active===false?'Disabled':'Active'}</span>${canRm&&m.uid!==S.p?.uid?`<button class="ib dl" onclick="removeMem('${m.uid}','${(m.name||m.username).replace(/'/g,"\\'")}')">Remove</button>`:''}</div></div>`).join('');
 }
 function filterTeamDirectory(q){
   const s=String(q||'').toLowerCase().trim();
-  if(!s){renderTeamDirectory(S.team);return;}
-  renderTeamDirectory((S.team||[]).filter(m=>String(m.name||'').toLowerCase().includes(s)||String(m.username||'').toLowerCase().includes(s)||String(m.role||'').toLowerCase().includes(s)));
+  if(!s){renderTeamDirectory(getAllMembers());return;}
+  renderTeamDirectory(getAllMembers().filter(m=>String(m.name||'').toLowerCase().includes(s)||String(m.username||'').toLowerCase().includes(s)||String(m.role||'').toLowerCase().includes(s)));
 }
 function openAddMember(){['nm-name','nm-user','nm-pass'].forEach(id=>document.getElementById(id).value='');document.getElementById('add-modal').classList.add('on');}
 function addMember(){
@@ -1416,21 +1574,23 @@ function addMember(){
   db.ref('users').orderByChild('username').equalTo(username).once('value',snap=>{
     if(snap.exists()){
       let ex='';snap.forEach(c=>{const v=c.val()||{};ex=(v.name||v.username||username)+' ('+(v.role||'member')+')';});
+      rememberKnownUser(username);
+      hydrateTeamFallback(true);
       toast('⚠ Username taken: '+ex,'err');return;
     }
     db.ref('users').push({name,username,password,role,active:true,createdAt:Date.now(),lastSeen:0})
-      .then(()=>{closeModal('add-modal');toast('✅ '+name+' added!','ok');logA('New: '+name+' ('+role+')','👥');})
+      .then(()=>{rememberKnownUser(username);closeModal('add-modal');toast('✅ '+name+' added!','ok');logA('New: '+name+' ('+role+')','👥');hydrateTeamFallback(true);})
       .catch(e=>toast('❌ Add failed: '+e.message,'err'));
   });
 }
-function removeMem(uid,name){if(!confirm('Remove '+name+'?'))return;db.ref('users/'+uid).remove().then(()=>{toast('🗑 '+name+' removed','ok');logA(name+' removed','🗑');});}
+function removeMem(uid,name){if(!confirm('Remove '+name+'?'))return;db.ref('users/'+uid).remove().then(()=>{S.team=(S.team||[]).filter(m=>m.uid!==uid);refreshTeamViews();toast('🗑 '+name+' removed','ok');logA(name+' removed','🗑');});}
 
 function loadDash(){
   const p=S.p,myT=S.tasks.filter(t=>t.assignedTo===p?.uid),el=document.getElementById('my-tasks');
   if(!myT.length){el.innerHTML='<div style="color:var(--t3);font-size:10px;padding:5px 0;">No tasks assigned</div>';}
   else{el.innerHTML=myT.slice(0,5).map(t=>{const sc={pending:'var(--yel)',inprogress:'var(--blu)',done:'var(--grn)'}[t.status]||'var(--t3)';return `<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--b);"><div style="width:6px;height:6px;border-radius:50%;background:${sc};flex-shrink:0;"></div><div style="font-size:11px;flex:1;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.4;">${t.headline}</div><span class="tfm ${t.format==='reel'?'tf-r':'tf-l'}" style="font-size:7px;">${(t.format||'').toUpperCase()}</span></div>`;}).join('')+'<div style="font-size:9px;color:var(--t3);padding-top:6px;cursor:pointer;" onclick="showTab(\'tasks\')">View all →</div>';}
   const colors=['#FF3366','#FFD700','#0EA5E9','#00E5A0','#A855F7','#EC4899'],pe=document.getElementById('team-perf');
-  pe.innerHTML=S.team.slice(0,5).map((m,i)=>{const tasks=S.tasks.filter(t=>t.assignedTo===m.uid),done=tasks.filter(t=>t.status==='done').length,pct=tasks.length?Math.round((done/tasks.length)*100):0,color=colors[i%colors.length],bc=pct>=80?'var(--grn)':pct>=50?'var(--yel)':'var(--red)';return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b);"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,${color},${color}66);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;">${(m.name||m.username)[0].toUpperCase()}</div><div style="flex:1;"><div style="font-size:11px;font-weight:600;margin-bottom:3px;">${m.name||m.username}</div><div class="pb"><div class="pbf" style="width:${pct}%;background:${bc}"></div></div></div><div style="font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${bc};">${pct}%</div></div>`;}).join('');
+  pe.innerHTML=getAllMembers().slice(0,5).map((m,i)=>{const tasks=S.tasks.filter(t=>t.assignedTo===m.uid),done=tasks.filter(t=>t.status==='done').length,pct=tasks.length?Math.round((done/tasks.length)*100):0,color=colors[i%colors.length],bc=pct>=80?'var(--grn)':pct>=50?'var(--yel)':'var(--red)';return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b);"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,${color},${color}66);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;">${(m.name||m.username)[0].toUpperCase()}</div><div style="flex:1;"><div style="font-size:11px;font-weight:600;margin-bottom:3px;">${m.name||m.username}</div><div class="pb"><div class="pbf" style="width:${pct}%;background:${bc}"></div></div></div><div style="font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${bc};">${pct}%</div></div>`;}).join('');
   db.ref('archive').orderByChild('date').equalTo(new Date().toISOString().split('T')[0]).once('value',snap=>{document.getElementById('ds-gen').textContent=snap.numChildren();});
 }
 function loadActivity(){
@@ -1458,9 +1618,15 @@ function listenGenHistory(){
 
 function renderGenHistory(){
   const el=document.getElementById('gen-hist');if(!el)return;
-  if(!S.genHist?.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No generated items yet</div></div>';return;}
+  if(!S.genHist?.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No generated items yet</div></div>';renderProdHistory();return;}
   const canDel=['admin','producer'].includes(S.p?.role);
   el.innerHTML=S.genHist.slice(0,40).map(r=>`<div class="ghi"><div class="ghh">${esc(r.headline||'Generated Content')}</div><div class="ghm"><span>🕒 ${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>🎬 ${(r.format||'reel').toUpperCase()}</span></div><div class="gha"><button class="ib st" onclick="openGenItem('${r.id}')">Open</button><button class="ib" onclick="openGenInSheet('${r.id}')">Sheet</button>${canDel?`<button class="ib dl" onclick="deleteGenItem('${r.id}')">Delete</button>`:''}</div></div>`).join('');
+  renderProdHistory();
+}
+function renderProdHistory(){
+  const el=document.getElementById('prod-hist');if(!el)return;
+  if(!S.genHist?.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No generated items yet</div></div>';return;}
+  el.innerHTML=S.genHist.slice(0,60).map(r=>`<div class="fhi"><div style="font-size:11px;font-weight:700;line-height:1.4;">${esc(r.headline||'Generated Content')}</div><div class="fhm"><span>🕒 ${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>🎬 ${(r.format||'reel').toUpperCase()}</span></div><div class="gha"><button class="ib st" onclick="openGenInSheet('${r.id}')">Open in Sheet</button><button class="ib" onclick="openGenItem('${r.id}')">Open in Generate</button></div></div>`).join('');
 }
 
 function payloadFromArchive(r){
@@ -1485,16 +1651,24 @@ function deleteGenItem(id){
   db.ref('archive/'+id).remove().then(()=>toast('🗑 Deleted','ok'));
 }
 
-let chatOff=null;
-function buildDM(){const el=document.getElementById('dm-list');el.innerHTML=S.team.filter(m=>m.uid!==S.p?.uid).map(m=>{const on=m.lastSeen&&(Date.now()-m.lastSeen)<300000;return `<div class="cr" onclick="openRoom('dm_${m.uid}',this,'${(m.name||m.username).replace(/'/g,"\\'")}')"><div class="cri">${(m.name||m.username)[0].toUpperCase()}</div><div><div class="crn">${m.name||m.username}</div><div class="crs" style="color:${on?'var(--grn)':'var(--t3)'};">${on?'● Online':'● Offline'}</div></div></div>`;}).join('');}
+let chatQuery=null,chatCb=null;
+function stopChatListener(){if(chatQuery&&chatCb)chatQuery.off('value',chatCb);chatQuery=null;chatCb=null;}
+function buildDM(){
+  const el=document.getElementById('dm-list');if(!el)return;
+  const rows=getAllMembers().filter(m=>m.uid&&m.uid!==S.p?.uid&&m.active!==false);
+  if(!rows.length){el.innerHTML='<div style="padding:10px;color:var(--t3);font-size:10px;">No members loaded</div>';return;}
+  el.innerHTML=rows.map(m=>{const on=m.lastSeen&&(Date.now()-m.lastSeen)<300000;return `<div class="cr" onclick="openRoom('dm_${m.uid}',this,'${(m.name||m.username).replace(/'/g,"\\'")}')"><div class="cri">${(m.name||m.username)[0].toUpperCase()}</div><div><div class="crn">${m.name||m.username}</div><div class="crs" style="color:${on?'var(--grn)':'var(--t3)'};">${on?'● Online':'● Offline'}</div></div></div>`;}).join('');
+}
 function openRoom(room,el,name){S.room=room;document.querySelectorAll('.cr').forEach(r=>r.classList.remove('on'));el.classList.add('on');document.getElementById('chat-hd').textContent=(room==='general'?'📢 ':'💬 ')+name;document.getElementById('chat-in').placeholder='Message '+name+'...';loadChat();}
 function loadChat(){
-  if(chatOff)chatOff();const el=document.getElementById('chat-msgs');el.innerHTML='';
-  chatOff=db.ref('messages/'+S.room).limitToLast(60).on('value',snap=>{
+  stopChatListener();const el=document.getElementById('chat-msgs');el.innerHTML='';
+  chatQuery=db.ref('messages/'+S.room).limitToLast(60);
+  chatCb=snap=>{
     const msgs=[];snap.forEach(c=>msgs.push({...c.val(),id:c.key}));
     el.innerHTML=msgs.map(m=>{const own=m.uid===S.p?.uid;return `<div class="msg ${own?'own':'other'}">${!own?`<div class="mav" style="background:linear-gradient(135deg,var(--red),var(--red)66)">${(m.name||'?')[0]}</div>`:''}<div><div class="mme">${own?'You':m.name} · ${new Date(m.ts).toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'})}</div><div class="mbu">${esc(m.text)}</div></div>${own?`<div class="mav" style="background:linear-gradient(135deg,var(--red),var(--red)66)">${(m.name||'?')[0]}</div>`:''}</div>`;}).join('');
     el.scrollTop=el.scrollHeight;
-  });
+  };
+  chatQuery.on('value',chatCb);
 }
 function sendMsg(){const input=document.getElementById('chat-in');const text=input.value.trim();if(!text||!S.p)return;const p=S.p;db.ref('messages/'+S.room).push({text,uid:p.uid,name:p.name||p.username,role:p.role,ts:Date.now()}).then(()=>{input.value='';if(S.room!=='general'){const uid=S.room.replace('dm_','');sendNotif(uid,'chat',(p.name||p.username)+': '+text.substring(0,50));}});}
 
@@ -1525,7 +1699,7 @@ function loadReports(){
     const el=document.getElementById('rep-rows');if(!rows.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No records</div></div>';return;}
     el.innerHTML=rows.map(r=>{const sc={done:'rs-d',pending:'rs-p',inprogress:'rs-i'}[r.status]||'rs-p';return `<div class="rtr"><div style="font-size:10px;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.4;">${r.headline||'—'}</div><div style="font-size:10px;color:var(--t2);">${r.generatedBy||'—'}</div><div><span class="tfm ${r.format==='reel'?'tf-r':'tf-l'}" style="font-size:7px;">${(r.format||'—').toUpperCase()}</span></div><div><span class="tg ${r.category||'national'}" style="font-size:7px;">${catLabel(r.category||'gen')}</span></div><div style="font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;">${r.date||'—'}</div><div><span class="rst ${sc}">${(r.status||'PENDING').toUpperCase()}</span></div></div>`;}).join('');
     window._rep=rows;
-    const sel=document.getElementById('rf-mem');sel.innerHTML='<option value="all">All Members</option>';S.team.forEach(m=>{sel.innerHTML+=`<option value="${m.uid}">${m.name||m.username}</option>`;});
+    const sel=document.getElementById('rf-mem');const old=sel.value||'all';sel.innerHTML='<option value="all">All Members</option>';getAllMembers().forEach(m=>{if(m.uid)sel.innerHTML+=`<option value="${m.uid}">${m.name||m.username}</option>`;});if([...sel.options].some(o=>o.value===old))sel.value=old;
   });
 }
 function exportCSV(){if(!window._rep?.length){toast('⚠ Load reports first','err');return;}const h=['Headline','Member','Format','Category','Date','Status'];const rows=window._rep.map(r=>[r.headline,r.generatedBy,r.format,r.category,r.date,r.status].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));const csv=[h.join(','),...rows].join('\n');const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='UBC_Report_'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast('⬇ CSV exported!','ok');}
@@ -1539,6 +1713,9 @@ function updateProfile(){
   if(!name||name.length<2){toast('⚠ Enter valid name','err');return;}
   db.ref('users/'+S.p.uid).update({name}).then(()=>{
     S.p.name=name;
+    rememberKnownMember(S.p);
+    S.team=dedupeMembers([...(S.team||[]),normalizeMember(S.p,S.p.uid)]);
+    refreshTeamViews();
     document.getElementById('u-nm').textContent=name;
     document.getElementById('si-name').textContent=name;
     const av=document.getElementById('u-av');if(av)av.textContent=name[0].toUpperCase();
