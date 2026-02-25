@@ -738,15 +738,40 @@ function normalizeFeedItem(n,i){
   };
 }
 
+async function repairFeedJson(raw){
+  const rp=`Convert the following to STRICT valid JSON array only (no markdown, no explanation). Keep up to 25 items and use fields: id, headline, summary, category, priority, source.
+Content:
+${String(raw||'').slice(0,8000)}`;
+  const txt=await callAI(rp,{json:true,temp:0,maxTokens:3500});
+  return parseFeedJson(txt);
+}
+
+async function getFeedArray(prompt){
+  const tries=[
+    prompt,
+    prompt+'\nIMPORTANT: Return ONLY a raw JSON array. No code fences. No prose.',
+    'Return EXACTLY 25 India news items as a JSON array only. Schema per item: {"id":"n1","headline":"Hindi headline","summary":"English context","category":"bihar|odisha|national|politics|crime|economy|viral","priority":"HIGH|MEDIUM|LOW","source":"Source"}'
+  ];
+  let lastRaw='';
+  for(const p of tries){
+    const txt=await callAI(p,{json:true,temp:0.2,maxTokens:3500});
+    lastRaw=txt;
+    let arr=parseFeedJson(txt);
+    if(arr&&arr.length)return arr;
+    arr=await repairFeedJson(txt);
+    if(arr&&arr.length)return arr;
+  }
+  console.warn('Feed parse failed. Last raw output:',String(lastRaw||'').slice(0,1200));
+  throw new Error('AI returned non-JSON after retries. Please click Refresh News once more.');
+}
+
 async function loadFeed(){
   const el=document.getElementById('news-list');
   el.innerHTML='<div class="empty"><div class="spn" style="margin:0 auto 8px;"></div><div class="em">LOADING NEWS...</div><div class="lbar" style="max-width:220px;margin:8px auto 0;"><div class="lbarf"></div></div></div>';
   const today=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
   const prompt=`News curator for UBC News Hindi (Bihar & Odisha focused). Today: ${today}. Compile 25 top India news stories. Priority order: Bihar > Odisha > National politics > Crime > Economy > Viral. Return ONLY valid JSON array, no markdown, no explanation: [{"id":"n1","headline":"Hindi headline","summary":"2 line English context","category":"bihar","priority":"HIGH","source":"Source name"}] Categories MUST be one of: bihar,odisha,national,politics,crime,economy,viral. Priority: HIGH=breaking/major, MEDIUM=important, LOW=general. Headlines MUST be in Hindi script. Return exactly 25 items.`;
   try{
-    const txt=await callAI(prompt,{json:true,temp:0.2,maxTokens:3500});
-    const arr=parseFeedJson(txt);
-    if(!arr||!arr.length)throw new Error('AI returned non-JSON. Please click Refresh News again.');
+    const arr=await getFeedArray(prompt);
     S.news=arr.slice(0,25).map((n,i)=>normalizeFeedItem(n,i));S.fn=[...S.news];
     renderFeed(S.fn);updateFS();startCD();
     toast('✅ '+S.news.length+' stories loaded!','ok');logA('News feed refreshed','📡');
