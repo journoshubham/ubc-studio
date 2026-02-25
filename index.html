@@ -204,6 +204,17 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .msl{font-size:8px;color:var(--t3);letter-spacing:1px;text-transform:uppercase;}
 .pb{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;}
 .pbf{height:100%;border-radius:2px;transition:width 0.5s;}
+.tmbx{margin-top:10px;background:var(--s2);border:1px solid var(--b);border-radius:11px;padding:10px;}
+.tmhd{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.tmhd .ttl{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--t2);text-transform:uppercase;}
+.tms{max-width:220px;position:relative;}
+.tms input{width:100%;background:var(--s3);border:1px solid var(--b);border-radius:18px;padding:6px 10px;color:var(--t1);font-size:10px;font-family:"Space Grotesk",sans-serif;}
+.tml{display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;}
+.tmi{border:1px solid var(--b);border-radius:9px;padding:8px;background:rgba(255,255,255,0.02);}
+.tmr1{display:flex;justify-content:space-between;gap:8px;align-items:center;}
+.tmn{font-size:11px;font-weight:700;}
+.tmu{font-size:9px;color:var(--t2);}
+.tmr2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
 /* Chat */
 .cl{display:grid;grid-template-columns:200px 1fr;height:calc(100vh - var(--th) - 32px);background:var(--s2);border:1px solid var(--b);border-radius:12px;overflow:hidden;}
 .csb{border-right:1px solid var(--b);display:flex;flex-direction:column;}
@@ -513,6 +524,13 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
             <button class="btn-add" id="btn-add-m" style="display:none;" onclick="openAddMember()">+ ADD MEMBER</button>
           </div>
           <div class="tgrd" id="team-grid"></div>
+          <div class="tmbx">
+            <div class="tmhd">
+              <div class="ttl">Member Directory (All Accounts)</div>
+              <div class="tms"><input type="text" id="tm-search" placeholder="Search name / username" oninput="filterTeamDirectory(this.value)"></div>
+            </div>
+            <div class="tml" id="team-list"></div>
+          </div>
         </div>
 
         <!-- REPORTS -->
@@ -950,43 +968,68 @@ function showLiveFeed(){
 
 function hasHindiText(t){return /[\u0900-\u097F]/.test(String(t||''));}
 
+async function pMapLimit(items,limit,fn){
+  const out=new Array(items.length);let i=0;
+  const worker=async()=>{while(i<items.length){const idx=i++;out[idx]=await fn(items[idx],idx);}};
+  const n=Math.min(limit,items.length);
+  await Promise.all(Array.from({length:n},()=>worker()));
+  return out;
+}
+
+async function translateViaGtx(text){
+  const q=String(text||'').trim();
+  if(!q)return'';
+  const base='https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=hi&dt=t&q='+encodeURIComponent(q);
+  const tries=[
+    async()=>{const r=await fetch(base);if(!r.ok)return null;return await r.json();},
+    async()=>{const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(base));if(!r.ok)return null;const d=await r.json();return JSON.parse(d?.contents||'null');},
+    async()=>{const r=await fetch(RSS_PROXY+encodeURIComponent(base));if(!r.ok)return null;return await r.json();}
+  ];
+  for(const t of tries){
+    try{
+      const d=await t();
+      const translated=Array.isArray(d?.[0])?d[0].map(x=>x?.[0]||'').join('').trim():'';
+      if(translated&&hasHindiText(translated))return translated;
+    }catch(_){}
+  }
+  return'';
+}
+
 async function translateNewsToHindi(items){
   const out=items.map(x=>({...x}));
   const need=out.filter(n=>!hasHindiText(n.headline));
-  if(!need.length||!S.gk)return out;
-  const size=10;
-  for(let i=0;i<need.length;i+=size){
-    const part=need.slice(i,i+size);
-    const lines=part.map((n,idx)=>`${idx+1}||${n.headline}||${n.summary||''}`).join('\n');
-    const prompt=`Translate each line into natural Hindi news language. Keep same order and same index.
+  if(!need.length)return out;
+  await pMapLimit(need,5,async n=>{
+    try{
+      const h=await translateViaGtx(n.headline);
+      if(h)n.headline=h;
+      if(n.summary&&!hasHindiText(n.summary)){
+        const s=await translateViaGtx(n.summary);
+        if(s)n.summary=s;
+      }
+    }catch(_){}
+  });
+  const remain=out.filter(n=>!hasHindiText(n.headline)).slice(0,12);
+  if(remain.length&&S.gk){
+    const size=6;
+    for(let i=0;i<remain.length;i+=size){
+      const part=remain.slice(i,i+size);
+      const lines=part.map((n,idx)=>`${idx+1}||${n.headline}||${n.summary||''}`).join('\n');
+      const prompt=`Translate each line into natural Hindi news style.
 Return ONLY plain lines in exact format:
 index||Hindi headline||Hindi summary
-No markdown.
 Input:
 ${lines}`;
-    try{
-      const txt=await callAI(prompt,{temp:0.2,maxTokens:2600});
-      const got=String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.replace(/^\d+[\).\-\s]*/,'')).map(l=>l.split('||').map(x=>x.trim())).filter(a=>a.length>=3);
-      got.forEach(a=>{
-        const idx=Math.max(0,parseInt(a[0],10)-1);
-        const n=part[idx];
-        if(!n)return;
-        const t=out.find(x=>x.id===n.id);
-        if(t){
-          if(a[1])t.headline=a[1];
-          if(a[2])t.summary=a[2];
-        }
-      });
-    }catch(_){}
-  }
-  const remain=out.filter(n=>!hasHindiText(n.headline)).slice(0,8);
-  for(const n of remain){
-    try{
-      const t=await callAI(`Translate to Hindi news style. Return only: headline||summary\n${n.headline}||${n.summary||''}`,{temp:0.2,maxTokens:500});
-      const p=String(t||'').split('||').map(x=>x.trim());
-      if(p[0])n.headline=p[0];
-      if(p[1])n.summary=p[1];
-    }catch(_){}
+      try{
+        const txt=await callAI(prompt,{temp:0.2,maxTokens:1800});
+        const got=String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.replace(/^\d+[\).\-\s]*/,'')).map(l=>l.split('||').map(x=>x.trim())).filter(a=>a.length>=3);
+        got.forEach(a=>{
+          const idx=Math.max(0,parseInt(a[0],10)-1);const n=part[idx];if(!n)return;
+          if(a[1])n.headline=a[1];
+          if(a[2])n.summary=a[2];
+        });
+      }catch(_){}
+    }
   }
   return out;
 }
@@ -1327,29 +1370,58 @@ function delTask(id){if(!confirm('Delete task?'))return;db.ref('tasks/'+id).remo
 function loadSheet(id){const t=S.tasks.find(t=>t.id===id);if(!t)return;document.getElementById('pf-vo').value=t.vo||'';document.getElementById('pf-hdr').value=t.headline||'';document.getElementById('pf-yt').value=t.ytTitle||'';document.getElementById('prod-info').textContent='Task: '+t.headline.substring(0,40);showTab('production');toast('📄 Loaded into Production Sheet','ok');}
 function updateDS(){const p=S.p;document.getElementById('ds-asgn').textContent=S.tasks.filter(t=>t.status!=='done').length;document.getElementById('ds-done').textContent=S.tasks.filter(t=>t.status==='done').length;document.getElementById('ds-pend').textContent=S.tasks.filter(t=>t.assignedTo===p?.uid&&t.status==='pending').length;}
 
-function loadTeam(){db.ref('users').on('value',snap=>{S.team=[];snap.forEach(c=>S.team.push({...c.val(),uid:c.key}));document.getElementById('si-mem').textContent=S.team.length;renderTeam();buildDM();});}
+function normalizeMember(m,uid){
+  const raw=(m&&typeof m==='object')?m:{};
+  const username=String(raw.username||('user_'+String(uid||'').slice(0,5))).trim().toLowerCase();
+  const name=String(raw.name||username||'Member').trim();
+  const role=['admin','producer','editor','anchor'].includes(String(raw.role||''))?String(raw.role):'producer';
+  return {...raw,uid,name,username,role,lastSeen:raw.lastSeen||0,active:raw.active!==false};
+}
+function loadTeam(){db.ref('users').on('value',snap=>{S.team=[];snap.forEach(c=>S.team.push(normalizeMember(c.val(),c.key)));document.getElementById('si-mem').textContent=S.team.length;renderTeam();renderTeamDirectory(S.team);buildDM();});}
 function renderTeam(){
   const g=document.getElementById('team-grid');if(!S.team.length){g.innerHTML='<div class="empty"><div class="ei">👥</div><div class="em">No members yet</div></div>';return;}
   const colors=['#FF3366','#FFD700','#0EA5E9','#00E5A0','#A855F7','#EC4899','#FF8C00','#14B8A6'];
-  g.innerHTML=S.team.map((m,i)=>{
+  const cards=S.team.map((m,i)=>{
     const color=colors[i%colors.length],online=m.lastSeen&&(Date.now()-m.lastSeen)<300000;
-    const tasks=S.tasks.filter(t=>t.assignedTo===m.uid),done=tasks.filter(t=>t.status==='done').length;
+    const tasks=(S.tasks||[]).filter(t=>t.assignedTo===m.uid),done=tasks.filter(t=>t.status==='done').length;
     const pct=tasks.length?Math.round((done/tasks.length)*100):0,bc=pct>=80?'var(--grn)':pct>=50?'var(--yel)':'var(--red)';
     const canRm=S.p?.role==='admin'&&m.uid!==S.p.uid;
+    const initials=(m.name||m.username||'M').charAt(0).toUpperCase();
     return `<div class="mc"><div class="mc-on" style="background:${online?'var(--grn)':'var(--t3)'}"></div>
-      <div class="mc-av" style="background:linear-gradient(135deg,${color},${color}77)">${(m.name||m.username)[0].toUpperCase()}</div>
-      <div class="mc-nm">${m.name||m.username}</div><div class="mc-rl rl-${m.role}">${m.role.toUpperCase()}</div>
+      <div class="mc-av" style="background:linear-gradient(135deg,${color},${color}77)">${initials}</div>
+      <div class="mc-nm">${esc(m.name||m.username)}</div><div class="mc-rl rl-${m.role}">${m.role.toUpperCase()}</div>
       <div class="mcs"><div><div class="msv" style="color:${color}">${tasks.length}</div><div class="msl">Tasks</div></div><div><div class="msv" style="color:var(--grn)">${done}</div><div class="msl">Done</div></div><div><div class="msv" style="color:${bc}">${pct}%</div><div class="msl">Rate</div></div></div>
       <div class="pb" style="margin-bottom:${canRm?'9px':'0'}"><div class="pbf" style="width:${pct}%;background:${bc}"></div></div>
       ${canRm?`<button class="ib dl" onclick="removeMem('${m.uid}','${(m.name||m.username).replace(/'/g,"\\'")}')">🗑 Remove</button>`:''}
     </div>`;
-  }).join('');
+  });
+  g.innerHTML=cards.join('');
+}
+function renderTeamDirectory(list){
+  const el=document.getElementById('team-list');if(!el)return;
+  const rows=(list&&list.length?list:S.team)||[];
+  if(!rows.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No members in directory</div></div>';return;}
+  const canRm=S.p?.role==='admin';
+  el.innerHTML=rows.map(m=>`<div class="tmi"><div class="tmr1"><div><div class="tmn">${esc(m.name||m.username||'Member')}</div><div class="tmu">@${esc(m.username||'')}</div></div><span class="mc-rl rl-${m.role}">${m.role.toUpperCase()}</span></div><div class="tmr2"><span class="tmu">UID: ${esc(String(m.uid||'').slice(0,8))}</span><span class="tmu">${m.active===false?'Disabled':'Active'}</span>${canRm&&m.uid!==S.p?.uid?`<button class="ib dl" onclick="removeMem('${m.uid}','${(m.name||m.username).replace(/'/g,"\\'")}')">Remove</button>`:''}</div></div>`).join('');
+}
+function filterTeamDirectory(q){
+  const s=String(q||'').toLowerCase().trim();
+  if(!s){renderTeamDirectory(S.team);return;}
+  renderTeamDirectory((S.team||[]).filter(m=>String(m.name||'').toLowerCase().includes(s)||String(m.username||'').toLowerCase().includes(s)||String(m.role||'').toLowerCase().includes(s)));
 }
 function openAddMember(){['nm-name','nm-user','nm-pass'].forEach(id=>document.getElementById(id).value='');document.getElementById('add-modal').classList.add('on');}
 function addMember(){
   const name=document.getElementById('nm-name').value.trim(),username=document.getElementById('nm-user').value.trim().toLowerCase(),password=document.getElementById('nm-pass').value,role=document.getElementById('nm-role').value;
   if(!name||!username||!password){toast('⚠ Fill all fields','err');return;}if(password.length<4){toast('⚠ Min 4 chars','err');return;}
-  db.ref('users').orderByChild('username').equalTo(username).once('value',snap=>{if(snap.exists()){toast('⚠ Username taken','err');return;}db.ref('users').push({name,username,password,role,active:true,createdAt:Date.now(),lastSeen:0}).then(()=>{closeModal('add-modal');toast('✅ '+name+' added!','ok');logA('New: '+name+' ('+role+')','👥');}).catch(e=>toast('❌ Add failed: '+e.message,'err'));});
+  db.ref('users').orderByChild('username').equalTo(username).once('value',snap=>{
+    if(snap.exists()){
+      let ex='';snap.forEach(c=>{const v=c.val()||{};ex=(v.name||v.username||username)+' ('+(v.role||'member')+')';});
+      toast('⚠ Username taken: '+ex,'err');return;
+    }
+    db.ref('users').push({name,username,password,role,active:true,createdAt:Date.now(),lastSeen:0})
+      .then(()=>{closeModal('add-modal');toast('✅ '+name+' added!','ok');logA('New: '+name+' ('+role+')','👥');})
+      .catch(e=>toast('❌ Add failed: '+e.message,'err'));
+  });
 }
 function removeMem(uid,name){if(!confirm('Remove '+name+'?'))return;db.ref('users/'+uid).remove().then(()=>{toast('🗑 '+name+' removed','ok');logA(name+' removed','🗑');});}
 
