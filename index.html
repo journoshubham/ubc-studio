@@ -575,7 +575,22 @@ const db=firebase.database();
 const GAPI_MODELS='https://generativelanguage.googleapis.com/v1beta/models';
 const GAPI_GENERATE='https://generativelanguage.googleapis.com/v1beta/models/';
 const GM_PREF=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash-latest','gemini-1.5-flash'];
-const FEED_LIMIT=40;
+const FEED_LIMIT=50;
+const FEED_MIN_NEW=18;
+const FEED_RECENT_MIN=60;
+const FEED_BACKFILL_MIN=360;
+const RSS_PROXY='https://api.allorigins.win/raw?url=';
+const FEED_BUCKETS=[
+  {category:'national',count:18,query:'(India OR "Government of India" OR Parliament OR Supreme Court) when:1h'},
+  {category:'odisha',count:8,query:'(Odisha OR Bhubaneswar OR Cuttack OR Puri) when:2h'},
+  {category:'north_india',count:7,query:'("North India" OR Delhi OR "Uttar Pradesh" OR Punjab OR Haryana OR Rajasthan OR Uttarakhand OR Himachal) when:2h'},
+  {category:'world',count:6,query:'("World news" OR international OR diplomacy OR conflict) when:1h'},
+  {category:'entertainment',count:5,query:'(Bollywood OR "Indian entertainment" OR celebrity OR film) when:3h'},
+  {category:'politics',count:2,query:'("India politics" OR election OR parliament) when:2h'},
+  {category:'economy',count:2,query:'("India economy" OR inflation OR market OR rupee) when:2h'},
+  {category:'crime',count:1,query:'("India crime" OR police OR court) when:2h'},
+  {category:'bihar',count:1,query:'(Bihar) when:3h'}
+];
 const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','reports','tone','settings'],editor:['dashboard','production','tasks','chat','settings'],anchor:['dashboard','production','tasks','chat','settings']};
@@ -623,8 +638,8 @@ function init(){
   document.getElementById('si-role').textContent=p.role.toUpperCase();
   const av=document.getElementById('u-av');av.textContent=(p.name||p.username)[0].toUpperCase();av.style.background='linear-gradient(135deg,'+(RC[p.role]||'#FF3366')+','+(RC[p.role]||'#FF3366')+'88)';
   const allowed=RA[p.role]||[];
-  document.querySelectorAll('.nbb').forEach(b=>{const id=b.id.replace('nb-','');if(!allowed.includes(id))b.style.display='none';});
-  if(p.role==='admin')document.getElementById('btn-add-m').style.display='block';
+  document.querySelectorAll('.nbb').forEach(b=>{const id=b.id.replace('nb-','');b.style.display=allowed.includes(id)?'flex':'none';});
+  document.getElementById('btn-add-m').style.display=p.role==='admin'?'block':'none';
   document.getElementById('cfg-gem').value=S.gk;
   updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();
 }
@@ -715,6 +730,125 @@ function retryGem(status,msg){
   return status===404||status===429||l.includes('quota')||l.includes('rate limit')||l.includes('resource_exhausted')||l.includes('model not available');
 }
 
+function toTs(v){
+  const t=Date.parse(v||'');
+  return Number.isFinite(t)?t:Date.now();
+}
+
+function minAgo(ts){return Math.max(0,Math.round((Date.now()-ts)/60000));}
+
+function ageText(ts){
+  const m=minAgo(ts);
+  if(m<60)return m+'m';
+  const h=Math.floor(m/60);
+  if(h<24)return h+'h';
+  return Math.floor(h/24)+'d';
+}
+
+function stripHtml(s){
+  const d=document.createElement('div');
+  d.innerHTML=String(s||'');
+  return d.textContent||d.innerText||'';
+}
+
+function cleanHeadline(s){
+  const t=String(s||'').replace(/\s+/g,' ').trim();
+  return t.replace(/\s*-\s*[^-]{2,80}$/,'').trim();
+}
+
+function rssSearchUrl(query){
+  return 'https://news.google.com/rss/search?q='+encodeURIComponent(query)+'&hl=en-IN&gl=IN&ceid=IN:en';
+}
+
+function pickPriority(cat,ts){
+  const m=minAgo(ts);
+  if(m<=45)return'HIGH';
+  if(['national','world','politics','economy'].includes(cat)&&m<=180)return'HIGH';
+  if(m<=360)return'MEDIUM';
+  return'LOW';
+}
+
+function newsKey(n){return (String(n.headline||'')+'|'+String(n.source||'')).toLowerCase().replace(/\s+/g,' ').trim();}
+
+function dedupeNews(list){
+  const seen=new Set(),out=[];
+  for(const n of list){
+    const k=newsKey(n);
+    if(!k||seen.has(k))continue;
+    seen.add(k);
+    out.push(n);
+  }
+  return out;
+}
+
+async function fetchRssBucket(bucket){
+  const baseUrl=rssSearchUrl(bucket.query);
+  const xml=await fetchRssText(baseUrl);
+  if(!xml)throw new Error('RSS fetch failed: '+bucket.category);
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  const raw=[...doc.querySelectorAll('item')].map((it,i)=>{
+    const title=cleanHeadline(it.querySelector('title')?.textContent||'');
+    const source=it.querySelector('source')?.textContent||'Google News';
+    const summary=stripHtml(it.querySelector('description')?.textContent||'').slice(0,260);
+    const publishedAt=toTs(it.querySelector('pubDate')?.textContent||'');
+    return {
+      id:bucket.category+'_'+(i+1),
+      headline:title||'News update',
+      summary:summary||'Latest update',
+      category:bucket.category,
+      priority:pickPriority(bucket.category,publishedAt),
+      source:String(source).trim()||'Google News',
+      publishedAt
+    };
+  }).filter(n=>n.headline&&n.headline.length>8);
+  const fresh=raw.filter(n=>minAgo(n.publishedAt)<=FEED_RECENT_MIN);
+  const backfill=raw.filter(n=>minAgo(n.publishedAt)<=FEED_BACKFILL_MIN);
+  const picked=[...fresh,...backfill];
+  return dedupeNews(picked).slice(0,Math.max(bucket.count*3,10));
+}
+
+async function fetchRssText(baseUrl){
+  const tries=[
+    async()=>{const r=await fetch(RSS_PROXY+encodeURIComponent(baseUrl));if(r.ok)return await r.text();return'';},
+    async()=>{const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(baseUrl));if(!r.ok)return'';const d=await r.json();return d?.contents||'';},
+    async()=>{const r=await fetch('https://r.jina.ai/http://'+baseUrl.replace(/^https?:\/\//,''));if(r.ok)return await r.text();return'';}
+  ];
+  for(const t of tries){
+    try{
+      const x=await t();
+      if(x&&x.includes('<item>'))return x;
+    }catch(_){}
+  }
+  return'';
+}
+
+function takeByQuota(items,category,count){
+  return items.filter(n=>n.category===category).slice(0,count);
+}
+
+async function getLiveFeedFromRss(){
+  const settled=await Promise.allSettled(FEED_BUCKETS.map(b=>fetchRssBucket(b)));
+  let pool=[];
+  settled.forEach((s,i)=>{if(s.status==='fulfilled')pool.push(...s.value);else console.warn('RSS bucket failed:',FEED_BUCKETS[i].category,s.reason);});
+  pool=dedupeNews(pool).sort((a,b)=>(b.publishedAt||0)-(a.publishedAt||0));
+  let out=[];
+  FEED_BUCKETS.forEach(b=>{out.push(...takeByQuota(pool,b.category,b.count));});
+  out=dedupeNews(out);
+  if(out.length<FEED_LIMIT){
+    out.push(...pool.filter(n=>!out.some(x=>newsKey(x)===newsKey(n))));
+  }
+  return dedupeNews(out).slice(0,FEED_LIMIT);
+}
+
+function mergeWithPrevious(news){
+  const prev=(S.news||[]).filter(n=>{
+    const ts=toTs(n.publishedAt||Date.now());
+    return minAgo(ts)<=24*60;
+  });
+  const merged=dedupeNews([...news,...prev]).sort((a,b)=>toTs(b.publishedAt)-toTs(a.publishedAt));
+  return merged.slice(0,FEED_LIMIT);
+}
+
 function parseFeedJson(txt){
   const clean=String(txt||'').replace(/```json|```/gi,'').trim();
   if(!clean)return null;
@@ -761,7 +895,8 @@ function normalizeFeedItem(n,i){
     summary:String(x.summary||x.context||'').trim(),
     category:normCat(x.category),
     priority:normPrio(x.priority),
-    source:String(x.source||'News').trim()
+    source:String(x.source||'News').trim(),
+    publishedAt:toTs(x.publishedAt||x.pubDate||x.date||Date.now())
   };
 }
 
@@ -806,7 +941,8 @@ function makeFallbackFeed(seed){
     summary:'Auto-generated fallback item',
     category:cats[i%cats.length],
     priority:pri[i%pri.length],
-    source:'UBC Feed'
+    source:'UBC Feed',
+    publishedAt:Date.now()-i*60000
   }));
 }
 
@@ -848,13 +984,16 @@ async function getFeedArray(prompt){
 async function loadFeed(){
   const el=document.getElementById('news-list');
   el.innerHTML='<div class="empty"><div class="spn" style="margin:0 auto 8px;"></div><div class="em">LOADING NEWS...</div><div class="lbar" style="max-width:220px;margin:8px auto 0;"><div class="lbarf"></div></div></div>';
-  const today=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-  const prompt=`News curator for UBC News Hindi. Today: ${today}. Compile ${FEED_LIMIT} top updates with THIS priority mix: 1) National India happenings (largest share), 2) Odisha, 3) North India, 4) World, 5) Bollywood/Entertainment, then politics/economy/crime and only a few major Bihar items if nationally relevant. Return ONLY valid JSON array, no markdown, no explanation: [{"id":"n1","headline":"Hindi headline","summary":"2 line English context","category":"national","priority":"HIGH","source":"Source name"}]. Categories MUST be one of: national,odisha,north_india,world,entertainment,politics,crime,economy,bihar. Priority: HIGH=breaking/major, MEDIUM=important, LOW=general. Headlines MUST be in Hindi script. Return exactly ${FEED_LIMIT} items.`;
   try{
-    const arr=await getFeedArray(prompt);
-    S.news=arr.slice(0,FEED_LIMIT).map((n,i)=>normalizeFeedItem(n,i));S.fn=[...S.news];
+    let rss=[];
+    try{rss=await getLiveFeedFromRss();}catch(e){console.warn('RSS live feed failed',e);}
+    if(!rss.length)throw new Error('Live sources are temporarily unavailable. Please refresh in a minute.');
+    if(rss.length<FEED_MIN_NEW)console.warn('Low live story volume:',rss.length);
+    const normalized=rss.map((n,i)=>normalizeFeedItem(n,i)).sort((a,b)=>toTs(b.publishedAt)-toTs(a.publishedAt));
+    S.news=mergeWithPrevious(normalized);S.fn=[...S.news];
     renderFeed(S.fn);updateFS();startCD();
-    toast('✅ '+S.news.length+' stories loaded!','ok');logA('News feed refreshed','📡');
+    const fresh=S.news.filter(n=>minAgo(toTs(n.publishedAt))<=FEED_RECENT_MIN).length;
+    toast('✅ '+S.news.length+' stories loaded ('+fresh+' fresh)','ok');logA('News feed refreshed','📡');
   }catch(e){el.innerHTML='<div class="empty"><div class="ei">❌</div><div class="em">'+e.message+'</div></div>';toast('❌ '+e.message,'err');}
 }
 function updateFS(){
@@ -870,7 +1009,7 @@ function renderFeed(news){
   el.innerHTML=news.map((n,i)=>`<div class="nc ${(n.priority||'low').toLowerCase()}">
     <div class="nnum">${String(i+1).padStart(2,'0')}</div>
     <div style="flex:1;"><div class="nhd">${n.headline}</div>
-    <div class="nmeta"><span class="tg ${n.category||'national'}">${catLabel(n.category)}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
+    <div class="nmeta"><span class="tg ${n.category||'national'}">${catLabel(n.category)}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span style="font-size:8px;color:var(--t3);">🕒 ${ageText(toTs(n.publishedAt))}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
     ${can?`<div class="nacts"><button class="bsm g" onclick='qGen("${n.id}")'>⚡ Gen</button><button class="bsm a" onclick='qAssign("${n.id}")'>👥 Assign</button></div>`:''}
   </div>`).join('');
 }
@@ -947,13 +1086,24 @@ async function doGenerate(){
   const lN=S.lang==='hindi'?'Pure Hindi throughout':'Hindi VO with English keywords in titles';
   const ex=S.tex?'\nStyle:\n'+S.tex.substring(0,400):'';const ctx=S.tctx?'\nChannel: '+S.tctx.substring(0,200):'';
   const hp=p=>S.plat.includes(p);
-  const prompt=`You are a senior content writer for UBC News Hindi (national-first, plus Odisha, North India, world and entertainment coverage). Tone: ${S.tone}. Format: ${fN}. Language: ${lN}.${ctx}${ex}
+  const prompt=`You are prime-time Hindi news writer for UBC News Hindi (national-first, plus Odisha, North India, world and entertainment). Tone: ${S.tone}. Format: ${fN}. Language: ${lN}.${ctx}${ex}
 Story: ${topic}
-Return ONLY valid JSON, no markdown: {"VO_SCRIPT":"Full Hindi VO. Hook in first 3 sec. End: UBC News Hindi ke liye reporting kar raha/rahi hoon.","VIDEO_HEADER":"5-7 word punchy Hindi title","EDITING_INSTRUCTIONS":"Editor timing guide",${hp('yt')?'"YOUTUBE_TITLE":"SEO title under 60 chars","YOUTUBE_DESCRIPTION":"150 word desc + hashtags",':'"YOUTUBE_TITLE":"","YOUTUBE_DESCRIPTION":"",'}${hp('fb')?'"FACEBOOK_CAPTION":"3-4 line emotional hook + question",':'"FACEBOOK_CAPTION":"",'}${hp('ig')?'"INSTAGRAM_CAPTION":"Punchy caption + 15 hashtags",':'"INSTAGRAM_CAPTION":"",'}${hp('wa')?'"WHATSAPP_MESSAGE":"2-3 shareable lines mentioning UBC News Hindi",':'"WHATSAPP_MESSAGE":"",'}${hp('tw')?'"TWITTER_POST":"Under 280 chars + 2-3 hashtags",':'"TWITTER_POST":"",'},"ok":"done"}`;
+Write high-impact, newsroom-grade output: sharp hook, factual flow, no weak filler, no repetition.
+VO requirements:
+- Powerful hook in first 1-2 lines
+- 3-5 concrete facts/angles
+- 1 accountability question
+- strong closing line for viewers
+- natural Hindi broadcast language (not robotic, not awkward)
+Return ONLY valid JSON, no markdown: {"VO_SCRIPT":"Hindi VO script","VIDEO_HEADER":"5-7 word punchy Hindi title","EDITING_INSTRUCTIONS":"Shot-by-shot timing + visual cues",${hp('yt')?'"YOUTUBE_TITLE":"SEO title under 60 chars","YOUTUBE_DESCRIPTION":"150 word desc + hashtags",':'"YOUTUBE_TITLE":"","YOUTUBE_DESCRIPTION":"",'}${hp('fb')?'"FACEBOOK_CAPTION":"3-4 line emotional hook + question",':'"FACEBOOK_CAPTION":"",'}${hp('ig')?'"INSTAGRAM_CAPTION":"Punchy caption + 15 hashtags",':'"INSTAGRAM_CAPTION":"",'}${hp('wa')?'"WHATSAPP_MESSAGE":"2-3 shareable lines mentioning UBC News Hindi",':'"WHATSAPP_MESSAGE":"",'}${hp('tw')?'"TWITTER_POST":"Under 280 chars + 2-3 hashtags",':'"TWITTER_POST":"",'},"ok":"done"}`;
   try{
-    const txt=await callAI(prompt,{json:true,temp:0.5,maxTokens:5000});
+    const txt=await callAI(prompt,{json:true,temp:0.45,maxTokens:5000});
     let obj=parseGenJson(txt);
     if(!obj){const fixed=await repairGenJson(txt);obj=parseGenJson(fixed);}
+    if(!obj){
+      const retry=await callAI(prompt+'\nIMPORTANT: Output strict JSON object only with all required keys.',{json:true,temp:0.35,maxTokens:5000});
+      obj=parseGenJson(retry)||parseGenJson(await repairGenJson(retry));
+    }
     if(!obj)throw new Error('Invalid AI response - please try again');
     S.gd=normalizeGenData(obj);
     if(!S.gd.VO_SCRIPT&&!S.gd.VIDEO_HEADER)throw new Error('AI response missing required content. Try again.');
