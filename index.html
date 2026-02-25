@@ -645,7 +645,7 @@ async function callAI(prompt){
       if(!msg.includes('not found')&&!msg.includes('no longer available')&&!msg.includes('deprecated')) throw new Error(msg);
     }catch(e){if(e.message&&!e.message.includes('not found')&&!e.message.includes('no longer available')) throw e;}
   }
-  throw new Error('No working Gemini model found. Check API key.');}
+  throw new Error('No working Gemini model found. Check API key.');
 }
 
 async function loadFeed(){
