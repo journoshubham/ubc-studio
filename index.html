@@ -104,11 +104,13 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--t1)
 .tg.high{background:rgba(255,51,102,0.12);color:var(--red);}
 .tg.medium{background:rgba(255,215,0,0.12);color:var(--yel);}
 .tg.low{background:rgba(74,85,104,0.2);color:var(--t2);}
-.tg.bihar,.tg.odisha{background:rgba(14,165,233,0.1);color:var(--blu);}
+.tg.bihar,.tg.odisha,.tg.north_india{background:rgba(14,165,233,0.1);color:var(--blu);}
 .tg.national,.tg.politics{background:rgba(168,85,247,0.1);color:var(--pur);}
 .tg.crime{background:rgba(255,140,0,0.1);color:var(--ora);}
 .tg.viral{background:rgba(236,72,153,0.1);color:var(--pnk);}
 .tg.economy{background:rgba(0,229,160,0.1);color:var(--grn);}
+.tg.world{background:rgba(56,189,248,0.14);color:#38BDF8;}
+.tg.entertainment{background:rgba(236,72,153,0.14);color:#EC4899;}
 .bsm{padding:4px 8px;border-radius:6px;font-size:9px;font-weight:700;cursor:pointer;border:1px solid;transition:all 0.16s;white-space:nowrap;font-family:"Space Grotesk",sans-serif;}
 .bsm.g{background:rgba(255,51,102,0.09);border-color:rgba(255,51,102,0.25);color:var(--red);}
 .bsm.a{background:rgba(14,165,233,0.07);border-color:rgba(14,165,233,0.2);color:var(--blu);}
@@ -365,8 +367,8 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--t1)
           <div class="fsr">
             <div class="fsc"><div class="fscv" id="sf-tot" style="color:var(--t1)">—</div><div class="fscl">Total</div></div>
             <div class="fsc"><div class="fscv" id="sf-hi" style="color:var(--red)">—</div><div class="fscl">High Priority</div></div>
-            <div class="fsc"><div class="fscv" id="sf-loc" style="color:var(--blu)">—</div><div class="fscl">Bihar/Odisha</div></div>
-            <div class="fsc"><div class="fscv" id="sf-vir" style="color:var(--pnk)">—</div><div class="fscl">Viral</div></div>
+            <div class="fsc"><div class="fscv" id="sf-loc" style="color:var(--blu)">—</div><div class="fscl">Odisha/North</div></div>
+            <div class="fsc"><div class="fscv" id="sf-vir" style="color:var(--pnk)">—</div><div class="fscl">World/Ent</div></div>
           </div>
           <div class="cdb">
             <span style="font-size:9px;color:var(--t2);letter-spacing:1px;">AUTO REFRESH</span>
@@ -376,16 +378,18 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--t1)
           </div>
           <div class="chips">
             <button class="ch on" onclick="filterFeed(this,'all')">ALL</button>
-            <button class="ch" onclick="filterFeed(this,'bihar')">🗺 BIHAR</button>
-            <button class="ch" onclick="filterFeed(this,'odisha')">🗺 ODISHA</button>
             <button class="ch" onclick="filterFeed(this,'national')">🏛 NATIONAL</button>
+            <button class="ch" onclick="filterFeed(this,'odisha')">🗺 ODISHA</button>
+            <button class="ch" onclick="filterFeed(this,'north_india')">🧭 NORTH INDIA</button>
+            <button class="ch" onclick="filterFeed(this,'world')">🌍 WORLD</button>
+            <button class="ch" onclick="filterFeed(this,'entertainment')">🎬 ENTERTAINMENT</button>
             <button class="ch" onclick="filterFeed(this,'politics')">🏛 POLITICS</button>
-            <button class="ch" onclick="filterFeed(this,'crime')">🚨 CRIME</button>
             <button class="ch" onclick="filterFeed(this,'economy')">💹 ECONOMY</button>
-            <button class="ch" onclick="filterFeed(this,'viral')">🔥 VIRAL</button>
+            <button class="ch" onclick="filterFeed(this,'crime')">🚨 CRIME</button>
+            <button class="ch" onclick="filterFeed(this,'bihar')">🗺 BIHAR</button>
             <div class="sbb"><input type="text" placeholder="Search..." oninput="searchFeed(this.value)"></div>
           </div>
-          <div id="news-list"><div class="empty"><div class="ei">📡</div><div class="em">Click REFRESH to load latest Bihar & Odisha news</div></div></div>
+          <div id="news-list"><div class="empty"><div class="ei">📡</div><div class="em">Click REFRESH to load latest national, Odisha, North India, world and entertainment news</div></div></div>
         </div>
 
         <!-- GENERATE -->
@@ -516,7 +520,7 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--bg);color:var(--t1)
             <div class="tnc" id="tc-formal" onclick="pickTone(this,'formal')"><div class="tnt">🎩 Formal</div><div class="tnd">Professional broadcast Hindi.</div></div>
           </div>
           <div class="box" style="margin-bottom:9px;"><div class="btl">EXAMPLE SCRIPT (Optional)</div><textarea class="pta" id="tone-ex" rows="4" placeholder="Paste sample VO to train AI on your style..."></textarea></div>
-          <div class="box" style="margin-bottom:9px;"><div class="btl">CHANNEL CONTEXT</div><textarea class="pta" id="tone-ctx" rows="2" placeholder="UBC News Hindi - Bihar/Odisha focused Hindi news channel..."></textarea></div>
+          <div class="box" style="margin-bottom:9px;"><div class="btl">CHANNEL CONTEXT</div><textarea class="pta" id="tone-ctx" rows="2" placeholder="UBC News Hindi - national-first Hindi news channel with Odisha, North India, world and entertainment coverage..."></textarea></div>
           <button class="bsv" onclick="saveTone()">💾 SAVE TONE</button>
           <span id="tone-ok" style="display:none;margin-left:9px;color:var(--grn);font-size:9px;font-weight:700;">✓ SAVED!</span>
         </div>
@@ -571,6 +575,7 @@ const db=firebase.database();
 const GAPI_MODELS='https://generativelanguage.googleapis.com/v1beta/models';
 const GAPI_GENERATE='https://generativelanguage.googleapis.com/v1beta/models/';
 const GM_PREF=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash-latest','gemini-1.5-flash'];
+const FEED_LIMIT=40;
 const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','reports','tone','settings'],editor:['dashboard','production','tasks','chat','settings'],anchor:['dashboard','production','tasks','chat','settings']};
@@ -647,19 +652,30 @@ async function callAI(prompt,opts={}){
   if(!/^AIza[0-9A-Za-z_-]{20,}$/.test(key))throw new Error('Gemini key format looks invalid. Paste full key from Google AI Studio.');
   const payload={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:temp,maxOutputTokens:maxTokens}};
   if(json)payload.generationConfig.responseMimeType='application/json';
+  const plainPayload={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:temp,maxOutputTokens:maxTokens}};
   let lastErr='Gemini request failed',sawQuota=false;
   const dyn=await getAvailableModels(key);
   const models=[...new Set([...dyn,...GM_PREF])];
   for(const model of models){
     const url=GAPI_GENERATE+model+':generateContent?key='+encodeURIComponent(key);
-    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    let r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(r.ok){
       const d=await r.json();
       const out=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
       if(out)return out;
       throw new Error('Gemini returned empty response');
     }
-    const em=await parseGemErr(r);
+    let em=await parseGemErr(r);
+    if(json&&r.status===400&&/responsemimetype|response mime|unknown field|unsupported/i.test(em)){
+      r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(plainPayload)});
+      if(r.ok){
+        const d=await r.json();
+        const out=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+        if(out)return out;
+        throw new Error('Gemini returned empty response');
+      }
+      em=await parseGemErr(r);
+    }
     if((r.status===429||/quota|rate limit|resource_exhausted/i.test(em)))sawQuota=true;
     if(retryGem(r.status,em)){lastErr=em;continue;}
     throw new Error(em);
@@ -715,8 +731,19 @@ function parseFeedJson(txt){
 }
 
 function normCat(v){
-  const c=String(v||'').toLowerCase().trim();
-  if(['bihar','odisha','national','politics','crime','economy','viral'].includes(c))return c;
+  const c=String(v||'').toLowerCase().trim().replace(/\s+/g,'_').replace(/-/g,'_');
+  const map={
+    india:'national',national:'national',nation:'national',national_news:'national',
+    odisha:'odisha',orissa:'odisha',
+    north_india:'north_india',northindia:'north_india',north:'north_india',
+    world:'world',international:'world',global:'world',
+    entertainment:'entertainment',bollywood:'entertainment',celeb:'entertainment',celebrity:'entertainment',movies:'entertainment',
+    politics:'politics',crime:'crime',economy:'economy',viral:'viral',bihar:'bihar'
+  };
+  if(map[c])return map[c];
+  if(c.includes('world')||c.includes('global'))return 'world';
+  if(c.includes('entertain')||c.includes('bollywood')||c.includes('film'))return 'entertainment';
+  if(c.includes('north'))return 'north_india';
   return 'national';
 }
 
@@ -737,6 +764,8 @@ function normalizeFeedItem(n,i){
     source:String(x.source||'News').trim()
   };
 }
+
+function catLabel(c){return String(c||'NEWS').replace(/_/g,' ').toUpperCase();}
 
 function parseFeedLines(txt){
   const lines=String(txt||'')
@@ -761,19 +790,19 @@ function parseFeedLines(txt){
       priority:normPrio(parts[3]||'MEDIUM'),
       source:parts[4]||'News'
     });
-    if(out.length>=25)break;
+    if(out.length>=FEED_LIMIT)break;
   }
   return out;
 }
 
 function makeFallbackFeed(seed){
-  const cats=['bihar','odisha','national','politics','crime','economy','viral'];
+  const cats=['national','national','national','national','odisha','odisha','north_india','north_india','world','entertainment','politics','economy','crime','bihar'];
   const pri=['HIGH','MEDIUM','LOW'];
   const raw=String(seed||'').replace(/\s+/g,' ').trim();
   const base=raw&&raw.length>6?raw:'ताजा अपडेट';
-  return Array.from({length:25},(_,i)=>({
+  return Array.from({length:FEED_LIMIT},(_,i)=>({
     id:'n'+(i+1),
-    headline:(i<5?base:'आज की प्रमुख खबर '+(i+1)).slice(0,120),
+    headline:(i<4?base:'आज की प्रमुख खबर '+(i+1)).slice(0,120),
     summary:'Auto-generated fallback item',
     category:cats[i%cats.length],
     priority:pri[i%pri.length],
@@ -782,7 +811,7 @@ function makeFallbackFeed(seed){
 }
 
 async function repairFeedJson(raw){
-  const rp=`Convert the following to STRICT valid JSON array only (no markdown, no explanation). Keep up to 25 items and use fields: id, headline, summary, category, priority, source.
+  const rp=`Convert the following to STRICT valid JSON array only (no markdown, no explanation). Keep up to ${FEED_LIMIT} items and use fields: id, headline, summary, category, priority, source.
 Content:
 ${String(raw||'').slice(0,8000)}`;
   const txt=await callAI(rp,{json:true,temp:0,maxTokens:3500});
@@ -793,7 +822,7 @@ async function getFeedArray(prompt){
   const tries=[
     prompt,
     prompt+'\nIMPORTANT: Return ONLY a raw JSON array. No code fences. No prose.',
-    'Return EXACTLY 25 India news items as a JSON array only. Schema per item: {"id":"n1","headline":"Hindi headline","summary":"English context","category":"bihar|odisha|national|politics|crime|economy|viral","priority":"HIGH|MEDIUM|LOW","source":"Source"}'
+    `Return EXACTLY ${FEED_LIMIT} India news items as a JSON array only. Schema per item: {"id":"n1","headline":"Hindi headline","summary":"English context","category":"national|odisha|north_india|world|entertainment|politics|crime|economy|bihar","priority":"HIGH|MEDIUM|LOW","source":"Source"}`
   ];
   let lastRaw='',lastLineRaw='';
   for(const p of tries){
@@ -804,7 +833,7 @@ async function getFeedArray(prompt){
     arr=await repairFeedJson(txt);
     if(arr&&arr.length)return arr;
   }
-  const linePrompt='Give 25 news items as plain lines using this exact format per line: Headline || Summary || Category || Priority || Source. No numbering. No markdown.';
+  const linePrompt=`Give ${FEED_LIMIT} news items as plain lines using this exact format per line: Headline || Summary || Category || Priority || Source. No numbering. No markdown.`;
   try{
     lastLineRaw=await callAI(linePrompt,{temp:0.3,maxTokens:3000});
     const byLine=parseFeedLines(lastLineRaw);
@@ -820,10 +849,10 @@ async function loadFeed(){
   const el=document.getElementById('news-list');
   el.innerHTML='<div class="empty"><div class="spn" style="margin:0 auto 8px;"></div><div class="em">LOADING NEWS...</div><div class="lbar" style="max-width:220px;margin:8px auto 0;"><div class="lbarf"></div></div></div>';
   const today=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-  const prompt=`News curator for UBC News Hindi (Bihar & Odisha focused). Today: ${today}. Compile 25 top India news stories. Priority order: Bihar > Odisha > National politics > Crime > Economy > Viral. Return ONLY valid JSON array, no markdown, no explanation: [{"id":"n1","headline":"Hindi headline","summary":"2 line English context","category":"bihar","priority":"HIGH","source":"Source name"}] Categories MUST be one of: bihar,odisha,national,politics,crime,economy,viral. Priority: HIGH=breaking/major, MEDIUM=important, LOW=general. Headlines MUST be in Hindi script. Return exactly 25 items.`;
+  const prompt=`News curator for UBC News Hindi. Today: ${today}. Compile ${FEED_LIMIT} top updates with THIS priority mix: 1) National India happenings (largest share), 2) Odisha, 3) North India, 4) World, 5) Bollywood/Entertainment, then politics/economy/crime and only a few major Bihar items if nationally relevant. Return ONLY valid JSON array, no markdown, no explanation: [{"id":"n1","headline":"Hindi headline","summary":"2 line English context","category":"national","priority":"HIGH","source":"Source name"}]. Categories MUST be one of: national,odisha,north_india,world,entertainment,politics,crime,economy,bihar. Priority: HIGH=breaking/major, MEDIUM=important, LOW=general. Headlines MUST be in Hindi script. Return exactly ${FEED_LIMIT} items.`;
   try{
     const arr=await getFeedArray(prompt);
-    S.news=arr.slice(0,25).map((n,i)=>normalizeFeedItem(n,i));S.fn=[...S.news];
+    S.news=arr.slice(0,FEED_LIMIT).map((n,i)=>normalizeFeedItem(n,i));S.fn=[...S.news];
     renderFeed(S.fn);updateFS();startCD();
     toast('✅ '+S.news.length+' stories loaded!','ok');logA('News feed refreshed','📡');
   }catch(e){el.innerHTML='<div class="empty"><div class="ei">❌</div><div class="em">'+e.message+'</div></div>';toast('❌ '+e.message,'err');}
@@ -831,8 +860,8 @@ async function loadFeed(){
 function updateFS(){
   document.getElementById('sf-tot').textContent=S.news.length;
   document.getElementById('sf-hi').textContent=S.news.filter(n=>n.priority==='HIGH').length;
-  document.getElementById('sf-loc').textContent=S.news.filter(n=>['bihar','odisha'].includes(n.category)).length;
-  document.getElementById('sf-vir').textContent=S.news.filter(n=>n.category==='viral').length;
+  document.getElementById('sf-loc').textContent=S.news.filter(n=>['odisha','north_india'].includes(n.category)).length;
+  document.getElementById('sf-vir').textContent=S.news.filter(n=>['world','entertainment'].includes(n.category)).length;
 }
 function renderFeed(news){
   const el=document.getElementById('news-list');
@@ -841,7 +870,7 @@ function renderFeed(news){
   el.innerHTML=news.map((n,i)=>`<div class="nc ${(n.priority||'low').toLowerCase()}">
     <div class="nnum">${String(i+1).padStart(2,'0')}</div>
     <div style="flex:1;"><div class="nhd">${n.headline}</div>
-    <div class="nmeta"><span class="tg ${n.category||'national'}">${(n.category||'NEWS').toUpperCase()}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
+    <div class="nmeta"><span class="tg ${n.category||'national'}">${catLabel(n.category)}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
     ${can?`<div class="nacts"><button class="bsm g" onclick='qGen("${n.id}")'>⚡ Gen</button><button class="bsm a" onclick='qAssign("${n.id}")'>👥 Assign</button></div>`:''}
   </div>`).join('');
 }
@@ -861,6 +890,51 @@ function tChip(el){el.classList.toggle('on');S.plat=[...document.querySelectorAl
 function setFmt(el,f){document.querySelectorAll('.cc.fmt').forEach(c=>c.classList.remove('on'));el.classList.add('on');S.fmt=f;}
 function setLang(el,l){document.querySelectorAll('.cc.lang').forEach(c=>c.classList.remove('on'));el.classList.add('on');S.lang=l;}
 
+function parseGenJson(txt){
+  const clean=String(txt||'').replace(/```json|```/gi,'').trim();
+  if(!clean)return null;
+  const tries=[clean];
+  const m=clean.match(/\{[\s\S]*\}/);
+  if(m)tries.push(m[0]);
+  for(const t of tries){
+    try{
+      const d=JSON.parse(t);
+      if(d&&typeof d==='object'&&!Array.isArray(d))return d;
+    }catch(_){}
+    try{
+      const fixed=t.replace(/,\s*([}\]])/g,'$1');
+      const d=JSON.parse(fixed);
+      if(d&&typeof d==='object'&&!Array.isArray(d))return d;
+    }catch(_){}
+  }
+  return null;
+}
+
+function normalizeGenData(d){
+  const pick=(...keys)=>{for(const k of keys){const v=d?.[k];if(typeof v==='string'&&v.trim())return v.trim();}return'';};
+  return {
+    VO_SCRIPT:pick('VO_SCRIPT','vo_script','vo','script','voiceover'),
+    VIDEO_HEADER:pick('VIDEO_HEADER','video_header','header','title','video_title'),
+    EDITING_INSTRUCTIONS:pick('EDITING_INSTRUCTIONS','editing_instructions','edit_guide','editing_guide'),
+    YOUTUBE_TITLE:pick('YOUTUBE_TITLE','youtube_title','yt_title'),
+    YOUTUBE_DESCRIPTION:pick('YOUTUBE_DESCRIPTION','youtube_description','yt_description'),
+    FACEBOOK_CAPTION:pick('FACEBOOK_CAPTION','facebook_caption','fb_caption'),
+    INSTAGRAM_CAPTION:pick('INSTAGRAM_CAPTION','instagram_caption','ig_caption'),
+    WHATSAPP_MESSAGE:pick('WHATSAPP_MESSAGE','whatsapp_message','wa_message'),
+    TWITTER_POST:pick('TWITTER_POST','twitter_post','x_post'),
+    ok:'done'
+  };
+}
+
+async function repairGenJson(raw){
+  const rp=`Convert this to STRICT valid JSON object only (no markdown, no explanation) with keys exactly:
+VO_SCRIPT, VIDEO_HEADER, EDITING_INSTRUCTIONS, YOUTUBE_TITLE, YOUTUBE_DESCRIPTION, FACEBOOK_CAPTION, INSTAGRAM_CAPTION, WHATSAPP_MESSAGE, TWITTER_POST, ok.
+Fill missing keys with empty strings. Keep Hindi content where available.
+Content:
+${String(raw||'').slice(0,9000)}`;
+  return callAI(rp,{json:true,temp:0,maxTokens:4500});
+}
+
 async function doGenerate(){
   const topic=document.getElementById('topic-box').value.trim();
   if(!topic){toast('⚠ Select story or type topic','err');return;}
@@ -873,14 +947,17 @@ async function doGenerate(){
   const lN=S.lang==='hindi'?'Pure Hindi throughout':'Hindi VO with English keywords in titles';
   const ex=S.tex?'\nStyle:\n'+S.tex.substring(0,400):'';const ctx=S.tctx?'\nChannel: '+S.tctx.substring(0,200):'';
   const hp=p=>S.plat.includes(p);
-  const prompt=`You are a senior content writer for UBC News Hindi (Bihar & Odisha). Tone: ${S.tone}. Format: ${fN}. Language: ${lN}.${ctx}${ex}
+  const prompt=`You are a senior content writer for UBC News Hindi (national-first, plus Odisha, North India, world and entertainment coverage). Tone: ${S.tone}. Format: ${fN}. Language: ${lN}.${ctx}${ex}
 Story: ${topic}
 Return ONLY valid JSON, no markdown: {"VO_SCRIPT":"Full Hindi VO. Hook in first 3 sec. End: UBC News Hindi ke liye reporting kar raha/rahi hoon.","VIDEO_HEADER":"5-7 word punchy Hindi title","EDITING_INSTRUCTIONS":"Editor timing guide",${hp('yt')?'"YOUTUBE_TITLE":"SEO title under 60 chars","YOUTUBE_DESCRIPTION":"150 word desc + hashtags",':'"YOUTUBE_TITLE":"","YOUTUBE_DESCRIPTION":"",'}${hp('fb')?'"FACEBOOK_CAPTION":"3-4 line emotional hook + question",':'"FACEBOOK_CAPTION":"",'}${hp('ig')?'"INSTAGRAM_CAPTION":"Punchy caption + 15 hashtags",':'"INSTAGRAM_CAPTION":"",'}${hp('wa')?'"WHATSAPP_MESSAGE":"2-3 shareable lines mentioning UBC News Hindi",':'"WHATSAPP_MESSAGE":"",'}${hp('tw')?'"TWITTER_POST":"Under 280 chars + 2-3 hashtags",':'"TWITTER_POST":"",'},"ok":"done"}`;
   try{
-    const txt=await callAI(prompt);
-    const m=txt.replace(/```json|```/g,'').trim().match(/\{[\s\S]*\}/);
-    if(!m)throw new Error('Invalid AI response - please try again');
-    S.gd=JSON.parse(m[0]);S.gd._story=S.story||{headline:topic};S.gd._fmt=S.fmt;S.gd._ts=Date.now();
+    const txt=await callAI(prompt,{json:true,temp:0.5,maxTokens:5000});
+    let obj=parseGenJson(txt);
+    if(!obj){const fixed=await repairGenJson(txt);obj=parseGenJson(fixed);}
+    if(!obj)throw new Error('Invalid AI response - please try again');
+    S.gd=normalizeGenData(obj);
+    if(!S.gd.VO_SCRIPT&&!S.gd.VIDEO_HEADER)throw new Error('AI response missing required content. Try again.');
+    S.gd._story=S.story||{headline:topic};S.gd._fmt=S.fmt;S.gd._ts=Date.now();
     renderOut(S.gd);fillProd(S.gd);
     db.ref('archive').push({headline:(S.story?.headline||topic).substring(0,120),category:S.story?.category||'general',format:S.fmt,generatedBy:S.p?.name||S.p?.username,generatedById:S.p?.uid,timestamp:Date.now(),date:new Date().toISOString().split('T')[0],vo:S.gd.VO_SCRIPT||'',ytTitle:S.gd.YOUTUBE_TITLE||'',status:'generated'});
     toast('✅ Content generated!','ok');logA('Generated: '+(S.story?.headline||topic).substring(0,50),'⚡');
@@ -927,7 +1004,7 @@ function renderTasks(tasks){
     return `<div class="tc2"><div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
       <div style="width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;" class="${sc}"></div>
       <div style="flex:1;"><div class="thl">${t.headline}</div>
-      <div class="tmeta"><span class="tan">👤 ${t.assignedToName||'—'}</span><span class="tfm ${t.format==='reel'?'tf-r':'tf-l'}">${t.format==='reel'?'🎬 REEL':'📺 LONG'}</span><span class="tg ${t.category||'national'}">${(t.category||'NEWS').toUpperCase()}</span><span style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;">${new Date(t.createdAt).toLocaleDateString('hi-IN')}</span></div>
+      <div class="tmeta"><span class="tan">👤 ${t.assignedToName||'—'}</span><span class="tfm ${t.format==='reel'?'tf-r':'tf-l'}">${t.format==='reel'?'🎬 REEL':'📺 LONG'}</span><span class="tg ${t.category||'national'}">${catLabel(t.category)}</span><span style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;">${new Date(t.createdAt).toLocaleDateString('hi-IN')}</span></div>
       ${t.note?'<div style="font-size:10px;color:var(--t2);margin-top:3px;">💬 '+t.note+'</div>':''}
       </div></div>
     <div class="tacts">
@@ -1026,7 +1103,7 @@ function loadReports(){
     if(from)rows=rows.filter(r=>r.date>=from);if(to)rows=rows.filter(r=>r.date<=to);if(member!=='all')rows=rows.filter(r=>r.generatedById===member);if(fmt!=='all')rows=rows.filter(r=>r.format===fmt);if(status!=='all')rows=rows.filter(r=>r.status===status);
     document.getElementById('rp-tot').textContent=rows.length;document.getElementById('rp-done').textContent=rows.filter(r=>r.status==='done').length;document.getElementById('rp-reel').textContent=rows.filter(r=>r.format==='reel').length;document.getElementById('rp-long').textContent=rows.filter(r=>r.format==='long').length;
     const el=document.getElementById('rep-rows');if(!rows.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No records</div></div>';return;}
-    el.innerHTML=rows.map(r=>{const sc={done:'rs-d',pending:'rs-p',inprogress:'rs-i'}[r.status]||'rs-p';return `<div class="rtr"><div style="font-size:10px;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.4;">${r.headline||'—'}</div><div style="font-size:10px;color:var(--t2);">${r.generatedBy||'—'}</div><div><span class="tfm ${r.format==='reel'?'tf-r':'tf-l'}" style="font-size:7px;">${(r.format||'—').toUpperCase()}</span></div><div><span class="tg ${r.category||'national'}" style="font-size:7px;">${(r.category||'GEN').toUpperCase()}</span></div><div style="font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;">${r.date||'—'}</div><div><span class="rst ${sc}">${(r.status||'PENDING').toUpperCase()}</span></div></div>`;}).join('');
+    el.innerHTML=rows.map(r=>{const sc={done:'rs-d',pending:'rs-p',inprogress:'rs-i'}[r.status]||'rs-p';return `<div class="rtr"><div style="font-size:10px;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.4;">${r.headline||'—'}</div><div style="font-size:10px;color:var(--t2);">${r.generatedBy||'—'}</div><div><span class="tfm ${r.format==='reel'?'tf-r':'tf-l'}" style="font-size:7px;">${(r.format||'—').toUpperCase()}</span></div><div><span class="tg ${r.category||'national'}" style="font-size:7px;">${catLabel(r.category||'gen')}</span></div><div style="font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;">${r.date||'—'}</div><div><span class="rst ${sc}">${(r.status||'PENDING').toUpperCase()}</span></div></div>`;}).join('');
     window._rep=rows;
     const sel=document.getElementById('rf-mem');sel.innerHTML='<option value="all">All Members</option>';S.team.forEach(m=>{sel.innerHTML+=`<option value="${m.uid}">${m.name||m.username}</option>`;});
   });
