@@ -985,6 +985,30 @@ function cleanSummaryText(s){
   return t;
 }
 
+function cleanArticleText(s){
+  let t=String(s||'').replace(/\r/g,'\n');
+  t=t.replace(/<script[\s\S]*?<\/script>/gi,' ');
+  t=t.replace(/<style[\s\S]*?<\/style>/gi,' ');
+  t=stripHtml(t);
+  t=t.replace(/https?:\/\/\S+/g,' ');
+  t=t.replace(/\s+/g,' ').trim();
+  const bad=['subscribe','cookie','advertisement','privacy policy','terms of use','download app','login','sign in','follow us'];
+  const lines=t.split(/(?<=[.!?।])\s+/).map(x=>x.trim()).filter(Boolean);
+  const good=lines.filter(l=>l.length>50&&!bad.some(b=>l.toLowerCase().includes(b))).slice(0,8);
+  return good.join(' ').slice(0,1200);
+}
+
+function pickDetailSummary(text,headline){
+  const h=String(headline||'').trim();
+  const body=cleanArticleText(text);
+  if(!body)return'';
+  const parts=body.split(/(?<=[.!?।])\s+/).map(x=>x.trim()).filter(Boolean);
+  let picked=parts.filter(p=>p.length>45).slice(0,3).join(' ');
+  if(!picked)picked=body.slice(0,420);
+  if(h&&picked.toLowerCase().startsWith(h.toLowerCase()))return picked.slice(0,460);
+  return picked.slice(0,460);
+}
+
 function extractRssSummary(desc,title){
   const base=cleanSummaryText(desc);
   if(base.length>=70)return base.slice(0,420);
@@ -1050,6 +1074,50 @@ function dedupeNews(list){
   return out;
 }
 
+async function fetchWithTimeout(url,ms=8500){
+  const ctl=new AbortController();
+  const t=setTimeout(()=>ctl.abort(),ms);
+  try{
+    const r=await fetch(url,{signal:ctl.signal});
+    return r;
+  }finally{clearTimeout(t);}
+}
+
+async function fetchArticleText(link){
+  const url=String(link||'').trim();
+  if(!/^https?:\/\//i.test(url))return'';
+  const noProto=url.replace(/^https?:\/\//i,'');
+  const tries=[
+    async()=>{const r=await fetchWithTimeout('https://r.jina.ai/http://'+noProto,9000);if(!r.ok)return'';return await r.text();},
+    async()=>{const r=await fetchWithTimeout(RSS_PROXY+encodeURIComponent(url),9000);if(!r.ok)return'';return await r.text();},
+    async()=>{const r=await fetchWithTimeout('https://api.allorigins.win/raw?url='+encodeURIComponent(url),9000);if(!r.ok)return'';return await r.text();}
+  ];
+  for(const t of tries){
+    try{
+      const txt=await t();
+      if(txt&&txt.length>300)return txt;
+    }catch(_){}
+  }
+  return'';
+}
+
+async function enrichFeedDetails(items){
+  const list=(items||[]).map(x=>({...x}));
+  const pick=list.filter(n=>n.link&&String(n.summary||'').length<180).slice(0,28);
+  if(!pick.length)return list;
+  await pMapLimit(pick,4,async n=>{
+    try{
+      const raw=await fetchArticleText(n.link);
+      const det=pickDetailSummary(raw,n.headline);
+      if(det&&det.length>80){
+        n.detail=det;
+        if((n.summary||'').length<140)n.summary=det;
+      }
+    }catch(_){}
+  });
+  return list;
+}
+
 async function fetchRssBucket(bucket){
   const urls=[rssSearchUrl(bucket.query,'en'),rssSearchUrl(bucket.query,'hi')];
   const settled=await Promise.allSettled(urls.map(u=>fetchRssText(u)));
@@ -1062,6 +1130,7 @@ async function fetchRssBucket(bucket){
       const title=cleanHeadline(it.querySelector('title')?.textContent||'');
       const source=it.querySelector('source')?.textContent||'Google News';
       const summary=extractRssSummary(it.querySelector('description')?.textContent||'',title);
+      const link=(it.querySelector('link')?.textContent||'').trim();
       const publishedAt=toTs(it.querySelector('pubDate')?.textContent||'');
       const bucketFallback=['odisha','north_india','bihar'].includes(bucket.category)?'national':bucket.category;
       const category=inferCategory(title,summary,source,bucketFallback);
@@ -1069,6 +1138,7 @@ async function fetchRssBucket(bucket){
         id:bucket.category+'_'+xi+'_'+(i+1),
         headline:title||'News update',
         summary:summary||'Latest update',
+        link,
         category,
         priority:pickPriority(category,publishedAt),
         source:String(source).trim()||'Google News',
@@ -1327,6 +1397,8 @@ function normalizeFeedItem(n,i){
     id:String(x.id||('n'+(i+1))),
     headline:String(x.headline||x.title||'Breaking update').trim(),
     summary:String(x.summary||x.context||'').trim(),
+    detail:String(x.detail||'').trim(),
+    link:String(x.link||x.url||'').trim(),
     category,
     priority,
     source:String(x.source||'News').trim(),
@@ -1423,7 +1495,8 @@ async function loadFeed(){
     try{rss=await getLiveFeedFromRss();}catch(e){console.warn('RSS live feed failed',e);}
     if(!rss.length)throw new Error('Live sources are temporarily unavailable. Please refresh in a minute.');
     if(rss.length<FEED_MIN_NEW)console.warn('Low live story volume:',rss.length);
-    const normalized=rss.map((n,i)=>normalizeFeedItem(n,i)).sort((a,b)=>toTs(b.publishedAt)-toTs(a.publishedAt));
+    let normalized=rss.map((n,i)=>normalizeFeedItem(n,i)).sort((a,b)=>toTs(b.publishedAt)-toTs(a.publishedAt));
+    normalized=await enrichFeedDetails(normalized);
     archiveCurrentFeed();
     S.activeFeed='live';
     const merged=mergeWithPrevious(normalized);
@@ -1467,9 +1540,11 @@ function qGen(id){
   if(n){
     S.story=n;
     const ts=new Date(toTs(n.publishedAt)).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const detail=(n.detail||n.summary||'').trim();
     document.getElementById('topic-box').value=
 `शीर्षक: ${n.headline}
 सारांश: ${n.summary||'प्रारंभिक अपडेट'}
+विस्तार: ${detail||'उपलब्ध डिटेल सीमित है'}
 श्रेणी: ${catLabel(n.category)}
 स्रोत: ${n.source||'News'} | समय: ${ts}
 निर्देश: ऊपर दिए गए तथ्यों पर आधारित रहकर न्यूज़ पैकेज बनाएं।`;
@@ -1529,7 +1604,7 @@ ${String(raw||'').slice(0,9000)}`;
 
 function extractFactHints(topic){
   const t=String(topic||'').split('\n').map(x=>x.trim()).filter(Boolean);
-  const picks=t.filter(x=>/[0-9०-९]/.test(x)||/किलोमीटर|किमी|करोड़|लाख|हजार|प्रतिशत|दिन|घंटा|year|km|crore|lakh|percent|project|tender|budget|deadline/i.test(x));
+  const picks=t.filter(x=>/[0-9०-९]/.test(x)||/किलोमीटर|किमी|करोड़|लाख|हजार|प्रतिशत|दिन|घंटा|year|km|crore|lakh|percent|project|tender|budget|deadline|घटना|दावा|बयान|रिपोर्ट|स्थल|तारीख/i.test(x));
   const alt=t.filter(x=>/सारांश|source|स्रोत|समय|category|श्रेणी/i.test(x));
   const out=[...new Set([...picks,...alt])].slice(0,5);
   return out;
@@ -1567,6 +1642,7 @@ Critical rules:
 - Keep language broadcast-quality Hindi, direct and natural.
 - Avoid vague filler lines like "विकास की रफ्तार तेज" unless directly supported by story facts.
 - If numbers/distances/money are present, keep exact figures in VO.
+- VO में कम से कम 4 ठोस तथ्य/डिटेल पॉइंट शामिल करें (कौन, क्या, कब, कहां, कितनी राशि/लंबाई/समय में से जो उपलब्ध हों)।
 VO requirements:
 - Powerful hook in first 1-2 lines
 - 3-5 concrete facts/angles
