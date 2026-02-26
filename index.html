@@ -75,9 +75,12 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 /* Stat cards */
 .dg4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px;}
 .sc{border-radius:13px;padding:14px;position:relative;overflow:hidden;}
+.sc.click{cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;}
+.sc.click:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(2,6,23,.18);}
 .sc .v{font-family:"Bebas Neue",sans-serif;font-size:38px;line-height:1;margin-bottom:3px;}
 .sc .l{font-size:9px;font-weight:700;letter-spacing:2px;opacity:0.6;text-transform:uppercase;}
 .sc .ic{position:absolute;right:12px;top:12px;font-size:24px;opacity:0.18;}
+.sc .go{position:absolute;right:12px;bottom:10px;font-size:8px;letter-spacing:1px;color:var(--t2);}
 .scr{background:linear-gradient(135deg,rgba(255,51,102,0.19),rgba(255,51,102,0.05));border:1px solid rgba(255,51,102,0.2);}
 .scb{background:linear-gradient(135deg,rgba(14,165,233,0.19),rgba(14,165,233,0.05));border:1px solid rgba(14,165,233,0.2);}
 .scg{background:linear-gradient(135deg,rgba(0,229,160,0.19),rgba(0,229,160,0.05));border:1px solid rgba(0,229,160,0.2);}
@@ -85,6 +88,17 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .box{background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:11px;}
 .btl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--t2);text-transform:uppercase;margin-bottom:10px;}
 .d2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
+.bars{display:flex;flex-direction:column;gap:7px;}
+.bar{display:grid;grid-template-columns:86px 1fr 36px;align-items:center;gap:8px;}
+.bar .lbl{margin:0;font-size:8px;letter-spacing:1px;color:var(--t2);}
+.bar .trk{height:8px;border-radius:10px;background:rgba(255,255,255,0.06);overflow:hidden;border:1px solid var(--b);}
+.bar .fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--red),var(--ora),var(--yel));}
+.bar .num{font-size:9px;color:var(--t2);text-align:right;font-family:"JetBrains Mono",monospace;}
+.trend{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;align-items:end;height:120px;}
+.tb{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.tbv{width:100%;border-radius:7px;background:linear-gradient(180deg,rgba(14,165,233,.92),rgba(14,165,233,.25));border:1px solid rgba(14,165,233,.3);min-height:10px;}
+.tbl{font-size:8px;color:var(--t2);}
+.tbn{font-size:8px;color:var(--t2);font-family:"JetBrains Mono",monospace;}
 /* Feed */
 .fsr{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px;}
 .fsc{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:10px;text-align:center;}
@@ -109,6 +123,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .nc.low{border-left:3px solid var(--t3);}
 .nnum{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--t3);width:20px;flex-shrink:0;margin-top:1px;}
 .nhd{font-size:12px;font-weight:600;font-family:"Noto Sans Devanagari",sans-serif;line-height:1.5;margin-bottom:4px;}
+.nsm{font-size:10px;color:var(--t2);font-family:"Noto Sans Devanagari",sans-serif;line-height:1.5;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .nmeta{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
 .nacts{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
 .tg{padding:2px 7px;border-radius:20px;font-size:8px;font-weight:700;letter-spacing:0.5px;}
@@ -275,6 +290,18 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .pp{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:13px;}
 .pp.full{grid-column:1/-1;}
 .ppl{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--t2);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.phf{display:grid;grid-template-columns:1fr 170px;gap:8px;margin-bottom:8px;}
+.phf input,.phf select{width:100%;background:var(--s3);border:1px solid var(--b);border-radius:9px;padding:7px 10px;color:var(--t1);font-size:10px;font-family:"Space Grotesk",sans-serif;}
+.prtbl{border:1px solid var(--b);border-radius:10px;overflow:hidden;}
+.prhd,.prr{display:grid;grid-template-columns:88px minmax(260px,1fr) 86px 90px 170px;gap:8px;align-items:center;padding:8px 10px;}
+.prhd{background:rgba(255,255,255,0.03);font-size:8px;letter-spacing:1px;color:var(--t2);text-transform:uppercase;font-weight:700;}
+.prr{border-top:1px solid var(--b);font-size:10px;}
+.prr:hover{background:rgba(255,255,255,.03);}
+.prh{font-family:"Noto Sans Devanagari",sans-serif;font-weight:600;line-height:1.4;cursor:pointer;}
+.prm{font-size:9px;color:var(--t2);font-family:"JetBrains Mono",monospace;}
+.pra{display:flex;gap:5px;justify-content:flex-end;}
+.voa{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+.voa audio{height:34px;max-width:360px;}
 .pta{width:100%;background:var(--s3);border:1px solid var(--b);border-radius:8px;padding:9px;color:var(--t1);font-size:11px;font-family:"Noto Sans Devanagari",sans-serif;line-height:1.7;resize:vertical;}
 .pta:focus{outline:none;border-color:rgba(255,51,102,0.28);}
 /* Tone */
@@ -315,7 +342,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .empty{text-align:center;padding:40px 14px;color:var(--t3);}
 .ei{font-size:34px;margin-bottom:7px;}
 .em{font-size:10px;letter-spacing:1px;}
-@media(max-width:900px){.dg4,.fsr{grid-template-columns:1fr 1fr;}.gl{grid-template-columns:1fr;}.sg{grid-template-columns:1fr;}.pg{grid-template-columns:1fr;}.tgrd{grid-template-columns:1fr 1fr;}}
+@media(max-width:900px){.dg4,.fsr,.d2{grid-template-columns:1fr 1fr;}.gl{grid-template-columns:1fr;}.sg{grid-template-columns:1fr;}.pg{grid-template-columns:1fr;}.tgrd{grid-template-columns:1fr 1fr;}.phf{grid-template-columns:1fr;}.prhd{display:none;}.prr{grid-template-columns:1fr;gap:5px;}.pra{justify-content:flex-start;}.voa audio{max-width:100%;width:100%;}}
 </style>
 </head>
 <body>
@@ -381,14 +408,18 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
         <!-- DASHBOARD -->
         <div class="tab on" id="tab-dashboard">
           <div class="dg4">
-            <div class="sc scr"><div class="ic">📰</div><div class="v" id="ds-gen">0</div><div class="l">Generated Today</div></div>
-            <div class="sc scb"><div class="ic">📋</div><div class="v" id="ds-asgn">0</div><div class="l">Active Tasks</div></div>
-            <div class="sc scg"><div class="ic">✅</div><div class="v" id="ds-done">0</div><div class="l">Completed</div></div>
-            <div class="sc scp"><div class="ic">⏳</div><div class="v" id="ds-pend">0</div><div class="l">My Pending</div></div>
+            <div class="sc scr click" onclick="openGeneratedToday()"><div class="ic">📰</div><div class="v" id="ds-gen">0</div><div class="l">Generated Today</div><div class="go">OPEN ↗</div></div>
+            <div class="sc scb click" onclick="showTab('tasks')"><div class="ic">📋</div><div class="v" id="ds-asgn">0</div><div class="l">Active Tasks</div><div class="go">TASKS ↗</div></div>
+            <div class="sc scg click" onclick="openGeneratedToday()"><div class="ic">✅</div><div class="v" id="ds-done">0</div><div class="l">Completed</div><div class="go">OUTPUT ↗</div></div>
+            <div class="sc scp click" onclick="showTab('tasks')"><div class="ic">⏳</div><div class="v" id="ds-pend">0</div><div class="l">My Pending</div><div class="go">ACTION ↗</div></div>
           </div>
           <div class="d2">
             <div class="box"><div class="btl">📋 My Tasks</div><div id="my-tasks"></div></div>
             <div class="box"><div class="btl">👥 Team Performance</div><div id="team-perf"></div></div>
+          </div>
+          <div class="d2">
+            <div class="box"><div class="btl">📊 News Category Mix (Today)</div><div id="dash-cats"></div></div>
+            <div class="box"><div class="btl">📈 7-Day Generated Trend</div><div id="dash-trend"></div></div>
           </div>
           <div class="box"><div class="btl">⚡ Recent Activity</div><div id="activity-feed"></div></div>
         </div>
@@ -478,9 +509,25 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
           <div class="pg">
             <div class="pp full">
               <div class="ppl">🗂 GENERATED ITEMS (LATEST FIRST)<button class="ib st" style="padding:3px 8px;font-size:8px;" onclick="showTab('generate')">OPEN FULL</button></div>
-              <div class="ghl" id="prod-hist"></div>
+              <div class="phf">
+                <input id="prod-search" type="text" placeholder="Search generated headline..." oninput="renderProdHistory()">
+                <select id="prod-range" onchange="renderProdHistory()">
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">Last 7 Days</option>
+                </select>
+              </div>
+              <div id="prod-hist"></div>
             </div>
-            <div class="pp full"><div class="ppl">🎙 VO SCRIPT<button class="bcp" onclick="cpF('pf-vo')">COPY</button></div><textarea class="pta" id="pf-vo" rows="7" placeholder="VO script appears after generation..."></textarea></div>
+            <div class="pp full">
+              <div class="ppl">🎙 VO SCRIPT<div style="display:flex;gap:6px;align-items:center;"><select class="si" id="vo-voice-select" onchange="setActiveVoice(this.value)" style="max-width:170px;padding:4px 8px;font-size:9px;"></select><button class="ib st" style="padding:3px 8px;font-size:8px;" onclick="genHindiVoice()">🎤 Generate Voice</button><button class="ib" style="padding:3px 8px;font-size:8px;" onclick="previewHindiVoice()">▶ Preview</button><button class="bcp" onclick="cpF('pf-vo')">COPY</button></div></div>
+              <textarea class="pta" id="pf-vo" rows="7" placeholder="VO script appears after generation..."></textarea>
+              <div class="voa">
+                <audio id="vo-audio" controls preload="none"></audio>
+                <button class="ib" id="vo-download" onclick="downloadVoice()" disabled>⬇ Download MP3</button>
+                <span id="vo-status" style="font-size:9px;color:var(--t2);">Voice not generated</span>
+              </div>
+            </div>
             <div class="pp"><div class="ppl">📺 VIDEO HEADER<button class="bcp" onclick="cpF('pf-hdr')">COPY</button></div><textarea class="pta" id="pf-hdr" rows="3"></textarea></div>
             <div class="pp"><div class="ppl">🏷 SMALL HEADER<button class="bcp" onclick="cpF('pf-sh')">COPY</button></div><textarea class="pta" id="pf-sh" rows="3"></textarea></div>
             <div class="pp"><div class="ppl">▶ YOUTUBE TITLE<button class="bcp" onclick="cpF('pf-yt')">COPY</button></div><textarea class="pta" id="pf-yt" rows="3"></textarea></div>
@@ -579,11 +626,32 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
         <div class="tab" id="tab-settings">
           <div class="sr">
             <div class="spl sp-w" id="sp-gem"><span class="spd"></span><span id="sl-gem">GEMINI: Not set</span></div>
+            <div class="spl sp-w" id="sp-tts"><span class="spd"></span><span id="sl-tts">TTS: Browser Hindi</span></div>
             <div class="spl sp-ok"><span class="spd"></span>FIREBASE: Connected</div>
           </div>
           <div class="sg">
             <div class="scard"><div class="sct">✦ GEMINI API KEY</div><label class="sl2">Paste your API key</label><input class="si" type="password" id="cfg-gem" placeholder="AIzaSy..."><button class="bsv" onclick="saveCfg()">SAVE & TEST</button><span id="cfg-ok" style="display:none;margin-left:7px;color:var(--grn);font-size:9px;font-weight:700;">✓ SAVED</span></div>
             <div class="scard"><div class="sct">◈ CLAUDE API (Optional)</div><label class="sl2">Claude API key</label><input class="si" type="password" id="cfg-cla" placeholder="sk-ant-..."><button class="bsv" onclick="saveCfg()">SAVE</button></div>
+            <div class="scard">
+              <div class="sct">🎙 HINDI VOICE (TTS)</div>
+              <label class="sl2">Provider</label>
+              <select class="si" id="cfg-tts-provider"><option value="browser">Browser Hindi (Free)</option><option value="elevenlabs">ElevenLabs (Premium)</option></select>
+              <label class="sl2">ElevenLabs API Key</label>
+              <input class="si" type="password" id="cfg-el-key" placeholder="Paste ElevenLabs key...">
+              <label class="sl2">Voice Name</label>
+              <input class="si" type="text" id="cfg-voice-name" placeholder="e.g. Female Prime / Male Bold">
+              <label class="sl2">Voice ID (Hindi-capable)</label>
+              <input class="si" type="text" id="cfg-el-voice" placeholder="e.g. EXAVITQu4vr4xnSDxMaL">
+              <div style="display:flex;gap:6px;margin-top:6px;">
+                <button class="ib st" style="flex:1;" onclick="addVoicePreset()">+ Add Voice</button>
+                <button class="ib" style="flex:1;" onclick="saveCfg()">Save Voices</button>
+              </div>
+              <div id="cfg-voice-list" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+              <label class="sl2">Model ID</label>
+              <input class="si" type="text" id="cfg-el-model" placeholder="eleven_multilingual_v2">
+              <button class="bsv" onclick="saveCfg()">SAVE TTS</button>
+              <div style="font-size:9px;color:var(--t2);line-height:1.5;margin-top:6px;">Tip: Static app me key visible ho sakti hai. Production ke liye Firebase Function proxy use karein.</div>
+            </div>
             <div class="scard"><div class="sct">🔒 CHANGE PASSWORD</div><label class="sl2">New password</label><input class="si" type="password" id="cfg-pw" placeholder="Min 4 characters"><button class="bsv" onclick="changePw()">UPDATE</button><span id="pw-ok" style="display:none;margin-left:7px;color:var(--grn);font-size:9px;font-weight:700;">✓ CHANGED</span></div>
             <div class="scard"><div class="sct">ℹ️ ACCOUNT INFO</div><div style="font-size:11px;color:var(--t2);line-height:2.2;">Name: <strong id="si-name" style="color:var(--t1);">—</strong><br>Username: <strong id="si-user" style="color:var(--t1);">—</strong><br>Role: <strong id="si-role" style="color:var(--t1);">—</strong><br>Team: <strong id="si-mem" style="color:var(--t1);">—</strong> members</div><label class="sl2" style="margin-top:10px;">Display Name</label><input class="si" type="text" id="cfg-name" placeholder="Your name"><button class="bsv" onclick="updateProfile()">UPDATE NAME</button></div>
           </div>
@@ -641,6 +709,10 @@ const RSS_PROXY='https://api.allorigins.win/raw?url=';
 const LS_THEME='ubc_theme_v1';
 const LS_FEED_BATCH='ubc_feed_batches_v1';
 const LS_KNOWN_USERS='ubc_known_users_v1';
+const ELEVEN_API='https://api.elevenlabs.io/v1/text-to-speech/';
+const ELEVEN_VOICE_DEFAULT='EXAVITQu4vr4xnSDxMaL';
+const ELEVEN_VOICE_NAME_DEFAULT='Default Voice';
+const ELEVEN_MODEL_DEFAULT='eleven_multilingual_v2';
 const FEED_ARCHIVE_PATH='feedArchive';
 const FEED_ARCHIVE_MAX=80;
 const FEED_BUCKETS=[
@@ -657,11 +729,42 @@ const FEED_BUCKETS=[
 const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],editor:['dashboard','production','tasks','chat','team','settings'],anchor:['dashboard','production','tasks','chat','team','settings']};
-let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[]};
+let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',ek:'',evoice:ELEVEN_VOICE_DEFAULT,evoices:[{id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}],emodel:ELEVEN_MODEL_DEFAULT,ttsProvider:'browser',ttsAudio:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[]};
 
 function cleanGemKey(key){const k=(key||'').trim();return LEGACY_GEM_KEYS.has(k)?'':k;}
-function firstRun(){db.ref('users').orderByChild('role').equalTo('admin').once('value',s=>{if(s.exists())return;db.ref('users').push({name:'Admin',username:'admin',password:'ubc@2025',role:'admin',active:true,createdAt:Date.now(),lastSeen:0});db.ref('settings/config').set({geminiKey:'',claudeKey:''});});}
-function sanitizeCfg(){db.ref('settings/config').once('value',s=>{if(!s.exists())return;const v=s.val()||{};const g=cleanGemKey(v.geminiKey);if(g!==(v.geminiKey||''))db.ref('settings/config').update({geminiKey:g});});}
+function normalizeVoiceList(raw){
+  const arr=Array.isArray(raw)?raw:[];
+  const map=new Map();
+  arr.forEach((v,i)=>{
+    const id=String(v?.id||v?.voiceId||v||'').trim();
+    if(!id)return;
+    const key=id.toLowerCase();
+    const name=String(v?.name||('Voice '+(i+1))).trim()||('Voice '+(i+1));
+    if(!map.has(key))map.set(key,{id,name});
+  });
+  const out=[...map.values()].slice(0,20);
+  if(!out.length)out.push({id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT});
+  return out;
+}
+function getVoiceName(id){
+  const v=(S.evoices||[]).find(x=>x.id===id);
+  return v?.name||'Voice';
+}
+function firstRun(){db.ref('users').orderByChild('role').equalTo('admin').once('value',s=>{if(s.exists())return;db.ref('users').push({name:'Admin',username:'admin',password:'ubc@2025',role:'admin',active:true,createdAt:Date.now(),lastSeen:0});db.ref('settings/config').set({geminiKey:'',claudeKey:'',ttsProvider:'browser',elevenLabsKey:'',elevenVoiceId:ELEVEN_VOICE_DEFAULT,elevenModelId:ELEVEN_MODEL_DEFAULT,elevenVoices:[{id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}]});});}
+function sanitizeCfg(){
+  db.ref('settings/config').once('value',s=>{
+    if(!s.exists())return;
+    const v=s.val()||{};
+    const g=cleanGemKey(v.geminiKey);
+    const up={};
+    if(g!==(v.geminiKey||''))up.geminiKey=g;
+    if(!v.ttsProvider)up.ttsProvider='browser';
+    if(!v.elevenVoiceId)up.elevenVoiceId=ELEVEN_VOICE_DEFAULT;
+    if(!v.elevenModelId)up.elevenModelId=ELEVEN_MODEL_DEFAULT;
+    if(!Array.isArray(v.elevenVoices)||!v.elevenVoices.length)up.elevenVoices=[{id:v.elevenVoiceId||ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}];
+    if(Object.keys(up).length)db.ref('settings/config').update(up);
+  });
+}
 function setTheme(mode){const light=mode==='light';document.body.classList.toggle('light',light);localStorage.setItem(LS_THEME,light?'light':'dark');const b=document.getElementById('th-btn');if(b)b.textContent=light?'🌙 DARK':'☀ LIGHT';}
 function toggleTheme(){setTheme(document.body.classList.contains('light')?'dark':'light');}
 function applySavedTheme(){setTheme(localStorage.getItem(LS_THEME)==='light'?'light':'dark');}
@@ -694,7 +797,17 @@ function doLogin(){
     S.p={...d,uid};
     rememberKnownUser(S.p.username);
     db.ref('settings/config').once('value',cs=>{
-      if(cs.exists()){const v=cs.val();S.gk=cleanGemKey(v.geminiKey);S.ck=v.claudeKey||'';}
+      if(cs.exists()){
+        const v=cs.val()||{};
+        S.gk=cleanGemKey(v.geminiKey);
+        S.ck=v.claudeKey||'';
+        S.ttsProvider=v.ttsProvider==='elevenlabs'?'elevenlabs':'browser';
+        S.ek=(v.elevenLabsKey||'').trim();
+        S.evoices=normalizeVoiceList(v.elevenVoices||[{id:v.elevenVoiceId||ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}]);
+        S.evoice=(v.elevenVoiceId||ELEVEN_VOICE_DEFAULT).trim();
+        if(!S.evoices.some(x=>x.id===S.evoice))S.evoice=S.evoices[0]?.id||ELEVEN_VOICE_DEFAULT;
+        S.emodel=(v.elevenModelId||ELEVEN_MODEL_DEFAULT).trim();
+      }
       db.ref('users/'+uid+'/lastSeen').set(Date.now());
       document.getElementById('lg').style.display='none';
       const app=document.getElementById('app');app.classList.add('on');app.style.display='flex';app.style.flexDirection='column';
@@ -705,6 +818,8 @@ function doLogin(){
 function se(m){const e=document.getElementById('l-err');e.textContent='⚠ '+m;setTimeout(()=>e.textContent='',3000);}
 function doLogout(){
   if(S.p)db.ref('users/'+S.p.uid+'/lastSeen').set(Date.now());
+  if(S.ttsAudio){try{URL.revokeObjectURL(S.ttsAudio);}catch(_){}S.ttsAudio='';}
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
   db.ref('tasks').off();db.ref('messages').off();db.ref('notifications').off();stopTeamListener();stopFeedArchiveListener();stopChatListener();S.p=null;
   document.getElementById('app').classList.remove('on');document.getElementById('app').style.display='none';
   document.getElementById('lg').style.display='flex';
@@ -724,7 +839,15 @@ function init(){
   document.querySelectorAll('.nbb').forEach(b=>{const id=b.id.replace('nb-','');b.style.display=allowed.includes(id)?'flex':'none';});
   document.getElementById('btn-add-m').style.display=p.role==='admin'?'block':'none';
   document.getElementById('cfg-gem').value=S.gk;
+  document.getElementById('cfg-cla').value=S.ck||'';
+  const tp=document.getElementById('cfg-tts-provider');if(tp)tp.value=S.ttsProvider||'browser';
+  const ek=document.getElementById('cfg-el-key');if(ek)ek.value=S.ek||'';
+  const ev=document.getElementById('cfg-el-voice');if(ev)ev.value=S.evoice||ELEVEN_VOICE_DEFAULT;
+  const vn=document.getElementById('cfg-voice-name');if(vn)vn.value=getVoiceName(S.evoice);
+  const em=document.getElementById('cfg-el-model');if(em)em.value=S.emodel||ELEVEN_MODEL_DEFAULT;
   const nm=document.getElementById('cfg-name');if(nm)nm.value=p.name||'';
+  clearVoicePlayer();
+  renderVoiceLibrary();
   updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();listenGenHistory();listenFeedArchive();renderFeedHistory();
 }
 
@@ -738,7 +861,8 @@ function showTab(id){
   if(id==='chat'){loadChat();document.getElementById('cb').classList.remove('on');}
   if(id==='tasks')renderTasks(S.tasks);
   if(id==='team'){renderTeam();renderTeamDirectory(S.team);}
-  if(id==='production')renderProdHistory();
+  if(id==='production'){renderProdHistory();renderVoiceLibrary();}
+  if(id==='settings')renderVoiceLibrary();
   if(id==='dashboard')loadDash();
 }
 function setAI(ai){S.ai=ai;document.getElementById('ai-gem').classList.toggle('on',ai==='gemini');document.getElementById('ai-cla').classList.toggle('on',ai==='claude');document.getElementById('ai-lbl').textContent=ai==='gemini'?'✦ GEMINI POWERED':'◈ CLAUDE POWERED';toast(ai==='gemini'?'Switched to Gemini':'Switched to Claude');}
@@ -841,8 +965,55 @@ function cleanHeadline(s){
   return t.replace(/\s*-\s*[^-]{2,80}$/,'').trim();
 }
 
-function rssSearchUrl(query){
-  return 'https://news.google.com/rss/search?q='+encodeURIComponent(query)+'&hl=hi-IN&gl=IN&ceid=IN:hi';
+function cleanSummaryText(s){
+  let t=stripHtml(s).replace(/\s+/g,' ').trim();
+  t=t.replace(/^Read more:?/i,'').replace(/^(google news|breaking news)[:\-]?\s*/i,'').trim();
+  t=t.replace(/\s*(more|read more|…)\s*$/i,'').trim();
+  return t;
+}
+
+function extractRssSummary(desc,title){
+  const base=cleanSummaryText(desc);
+  if(base.length>=70)return base.slice(0,420);
+  const fromTitle=cleanHeadline(title||'').replace(/^[^:]{2,20}:\s*/,'').trim();
+  if(base.length>=28)return (base+(fromTitle&& !base.includes(fromTitle)?' '+fromTitle:'')).slice(0,420);
+  return (fromTitle||base||'प्रारंभिक रिपोर्ट, विस्तृत जानकारी अपडेट की जाएगी।').slice(0,420);
+}
+
+function textForCat(headline,summary,source){
+  return (String(headline||'')+' '+String(summary||'')+' '+String(source||'')).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ');
+}
+
+function hasAnyWord(txt,words){return words.some(w=>txt.includes(w));}
+
+function inferCategory(headline,summary,source,fallback='national'){
+  const t=textForCat(headline,summary,source);
+  const kw={
+    odisha:['odisha','orissa','bhubaneswar','cuttack','पुरी','puri','rourkela','sambalpur','balasore','berhampur','ganjam','khordha','mayurbhanj','jagatsinghpur','kendrapara','koraput'],
+    bihar:['bihar','patna','gaya','muzaffarpur','darbhanga','bhagalpur','siwan','begusarai','samastipur','purnia','chapra'],
+    north_india:['delhi','uttar pradesh','lucknow','kanpur','agra','punjab','amritsar','ludhiana','haryana','gurugram','rajasthan','jaipur','uttarakhand','dehradun','himachal','shimla','jammu','chandigarh','madhya pradesh','bhopal','indore'],
+    entertainment:['bollywood','film','movie','cinema','actor','actress','celebrity','trailer','ott','box office','song','web series','entertainment'],
+    economy:['economy','gdp','inflation','market','sensex','nifty','rupee','tax','gst','bank','stock','trade','export','import'],
+    crime:['crime','murder','rape','arrest','police','fir','court','ncb','ed','cbi','attack','shooting','robbery'],
+    politics:['politics','election','parliament','assembly','bjp','congress','aap','cm','pm','cabinet','minister','vidhan sabha'],
+    world:['world','international','us ','usa','america','uk ','russia','ukraine','china','israel','gaza','pakistan','europe','united nations']
+  };
+  if(hasAnyWord(t,kw.odisha))return 'odisha';
+  if(hasAnyWord(t,kw.bihar))return 'bihar';
+  if(hasAnyWord(t,kw.entertainment))return 'entertainment';
+  if(hasAnyWord(t,kw.economy))return 'economy';
+  if(hasAnyWord(t,kw.crime))return 'crime';
+  if(hasAnyWord(t,kw.politics))return 'politics';
+  if(hasAnyWord(t,kw.world))return 'world';
+  if(hasAnyWord(t,kw.north_india))return 'north_india';
+  return normCat(fallback);
+}
+
+function rssSearchUrl(query,lang='en'){
+  const lc=String(lang||'en').toLowerCase();
+  const l=lc==='hi'?'hi-IN':'en-IN';
+  const ceid=lc==='hi'?'IN:hi':'IN:en';
+  return 'https://news.google.com/rss/search?q='+encodeURIComponent(query)+'&hl='+encodeURIComponent(l)+'&gl=IN&ceid='+encodeURIComponent(ceid);
 }
 
 function pickPriority(cat,ts){
@@ -867,27 +1038,34 @@ function dedupeNews(list){
 }
 
 async function fetchRssBucket(bucket){
-  const baseUrl=rssSearchUrl(bucket.query);
-  const xml=await fetchRssText(baseUrl);
-  if(!xml)throw new Error('RSS fetch failed: '+bucket.category);
-  const doc=new DOMParser().parseFromString(xml,'application/xml');
-  const raw=[...doc.querySelectorAll('item')].map((it,i)=>{
-    const title=cleanHeadline(it.querySelector('title')?.textContent||'');
-    const source=it.querySelector('source')?.textContent||'Google News';
-    const summary=stripHtml(it.querySelector('description')?.textContent||'').slice(0,260);
-    const publishedAt=toTs(it.querySelector('pubDate')?.textContent||'');
-    return {
-      id:bucket.category+'_'+(i+1),
-      headline:title||'News update',
-      summary:summary||'Latest update',
-      category:bucket.category,
-      priority:pickPriority(bucket.category,publishedAt),
-      source:String(source).trim()||'Google News',
-      publishedAt
-    };
-  }).filter(n=>n.headline&&n.headline.length>8);
-  const fresh=raw.filter(n=>minAgo(n.publishedAt)<=FEED_RECENT_MIN);
-  const backfill=raw.filter(n=>minAgo(n.publishedAt)<=FEED_BACKFILL_MIN);
+  const urls=[rssSearchUrl(bucket.query,'en'),rssSearchUrl(bucket.query,'hi')];
+  const settled=await Promise.allSettled(urls.map(u=>fetchRssText(u)));
+  const xmls=settled.filter(s=>s.status==='fulfilled'&&s.value).map(s=>s.value);
+  if(!xmls.length)throw new Error('RSS fetch failed: '+bucket.category);
+  const raw=[];
+  xmls.forEach((xml,xi)=>{
+    const doc=new DOMParser().parseFromString(xml,'application/xml');
+    [...doc.querySelectorAll('item')].forEach((it,i)=>{
+      const title=cleanHeadline(it.querySelector('title')?.textContent||'');
+      const source=it.querySelector('source')?.textContent||'Google News';
+      const summary=extractRssSummary(it.querySelector('description')?.textContent||'',title);
+      const publishedAt=toTs(it.querySelector('pubDate')?.textContent||'');
+      const bucketFallback=['odisha','north_india','bihar'].includes(bucket.category)?'national':bucket.category;
+      const category=inferCategory(title,summary,source,bucketFallback);
+      raw.push({
+        id:bucket.category+'_'+xi+'_'+(i+1),
+        headline:title||'News update',
+        summary:summary||'Latest update',
+        category,
+        priority:pickPriority(category,publishedAt),
+        source:String(source).trim()||'Google News',
+        publishedAt
+      });
+    });
+  });
+  const filtered=raw.filter(n=>n.headline&&n.headline.length>8);
+  const fresh=filtered.filter(n=>minAgo(n.publishedAt)<=FEED_RECENT_MIN);
+  const backfill=filtered.filter(n=>minAgo(n.publishedAt)<=FEED_BACKFILL_MIN);
   const picked=[...fresh,...backfill];
   return dedupeNews(picked).slice(0,Math.max(bucket.count*3,10));
 }
@@ -1064,9 +1242,9 @@ async function translateNewsToHindi(items){
       }
     }catch(_){}
   });
-  const remain=out.filter(n=>!hasHindiText(n.headline)).slice(0,12);
+  const remain=out.filter(n=>!hasHindiText(n.headline)).slice(0,48);
   if(remain.length&&S.gk){
-    const size=6;
+    const size=8;
     for(let i=0;i<remain.length;i+=size){
       const part=remain.slice(i,i+size);
       const lines=part.map((n,idx)=>`${idx+1}||${n.headline}||${n.summary||''}`).join('\n');
@@ -1129,14 +1307,17 @@ function normPrio(v){
 
 function normalizeFeedItem(n,i){
   const x=(n&&typeof n==='object')?n:{};
+  const category=inferCategory(x.headline||x.title,x.summary||x.context,x.source,x.category);
+  const publishedAt=toTs(x.publishedAt||x.pubDate||x.date||Date.now());
+  const priority=String(x.priority||'').trim()?normPrio(x.priority):pickPriority(category,publishedAt);
   return {
     id:String(x.id||('n'+(i+1))),
     headline:String(x.headline||x.title||'Breaking update').trim(),
     summary:String(x.summary||x.context||'').trim(),
-    category:normCat(x.category),
-    priority:normPrio(x.priority),
+    category,
+    priority,
     source:String(x.source||'News').trim(),
-    publishedAt:toTs(x.publishedAt||x.pubDate||x.date||Date.now())
+    publishedAt
   };
 }
 
@@ -1253,6 +1434,7 @@ function renderFeed(news){
   el.innerHTML=news.map((n,i)=>`<div class="nc ${(n.priority||'low').toLowerCase()}">
     <div class="nnum">${String(i+1).padStart(2,'0')}</div>
     <div style="flex:1;"><div class="nhd">${n.headline}</div>
+    ${n.summary?`<div class="nsm">${n.summary}</div>`:''}
     <div class="nmeta"><span class="tg ${n.category||'national'}">${catLabel(n.category)}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span style="font-size:8px;color:var(--t3);">🕒 ${ageText(toTs(n.publishedAt))}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
     ${can?`<div class="nacts"><button class="bsm g" onclick='qGen("${n.id}")'>⚡ Gen</button><button class="bsm a" onclick='qAssign("${n.id}")'>👥 Assign</button></div>`:''}
   </div>`).join('');
@@ -1267,7 +1449,20 @@ function startCD(){
     if(S.cds<=0){clearInterval(S.cdt);loadFeed();}
   },1000);
 }
-function qGen(id){const n=S.news.find(n=>n.id===id);if(n){S.story=n;document.getElementById('topic-box').value=n.headline+(n.summary?'\n\n'+n.summary:'');}showTab('generate');setTimeout(doGenerate,400);}
+function qGen(id){
+  const n=S.news.find(n=>n.id===id);
+  if(n){
+    S.story=n;
+    const ts=new Date(toTs(n.publishedAt)).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('topic-box').value=
+`शीर्षक: ${n.headline}
+सारांश: ${n.summary||'प्रारंभिक अपडेट'}
+श्रेणी: ${catLabel(n.category)}
+स्रोत: ${n.source||'News'} | समय: ${ts}
+निर्देश: ऊपर दिए गए तथ्यों पर आधारित रहकर न्यूज़ पैकेज बनाएं।`;
+  }
+  showTab('generate');setTimeout(doGenerate,350);
+}
 function qAssign(id){const n=S.news.find(n=>n.id===id);if(!n)return;S.asgn={type:'feed',story:n};document.getElementById('modal-story').textContent=n.headline;fillAsn();document.getElementById('assign-modal').classList.add('on');}
 function tChip(el){el.classList.toggle('on');S.plat=[...document.querySelectorAll('#tab-generate .cc.on')].map(e=>['yt','fb','ig','wa','tw'].find(c=>e.classList.contains(c))).filter(Boolean);}
 function setFmt(el,f){document.querySelectorAll('.cc.fmt').forEach(c=>c.classList.remove('on'));el.classList.add('on');S.fmt=f;}
@@ -1335,6 +1530,10 @@ async function doGenerate(){
   const prompt=`You are prime-time Hindi news writer for UBC News Hindi (national-first, plus Odisha, North India, world and entertainment). Tone: ${S.tone}. Format: ${fN}. Language: ${lN}.${ctx}${ex}
 Story: ${topic}
 Write high-impact, newsroom-grade output: sharp hook, factual flow, no weak filler, no repetition.
+Critical rules:
+- Use ONLY facts available in story input. Do NOT invent numbers, names, allegations, or legal conclusions.
+- If facts are limited, clearly mark it as "प्रारंभिक रिपोर्ट" and avoid over-claiming.
+- Keep language broadcast-quality Hindi, direct and natural.
 VO requirements:
 - Powerful hook in first 1-2 lines
 - 3-5 concrete facts/angles
@@ -1342,7 +1541,7 @@ VO requirements:
 - strong closing line for viewers
 - natural Hindi broadcast language (not robotic, not awkward)
  - VO length target: ${dur}
-Return ONLY valid JSON, no markdown: {"VO_SCRIPT":"Hindi VO script","SMALL_HEADER":"2-4 word slug/strap line","VIDEO_HEADER":"5-7 word punchy Hindi title","EDITING_INSTRUCTIONS":"Shot-by-shot timing + visual cues",${hp('yt')?'"YOUTUBE_TITLE":"SEO title under 60 chars","YOUTUBE_DESCRIPTION":"150 word desc + hashtags",':'"YOUTUBE_TITLE":"","YOUTUBE_DESCRIPTION":"",'}${hp('fb')?'"FACEBOOK_CAPTION":"3-4 line emotional hook + question",':'"FACEBOOK_CAPTION":"",'}${hp('ig')?'"INSTAGRAM_CAPTION":"Punchy caption + 15 hashtags",':'"INSTAGRAM_CAPTION":"",'}${hp('wa')?'"WHATSAPP_MESSAGE":"2-3 shareable lines mentioning UBC News Hindi",':'"WHATSAPP_MESSAGE":"",'}${hp('tw')?'"TWITTER_POST":"Under 280 chars + 2-3 hashtags",':'"TWITTER_POST":"",'},"ok":"done"}`;
+Return ONLY valid JSON, no markdown: {"VO_SCRIPT":"Hindi VO script","SMALL_HEADER":"2-4 word slug/strap line","VIDEO_HEADER":"5-7 word punchy Hindi title","EDITING_INSTRUCTIONS":"Shot-by-shot timing + on-screen text + fact callouts + B-roll cues",${hp('yt')?'"YOUTUBE_TITLE":"SEO title under 60 chars","YOUTUBE_DESCRIPTION":"150 word desc + hashtags",':'"YOUTUBE_TITLE":"","YOUTUBE_DESCRIPTION":"",'}${hp('fb')?'"FACEBOOK_CAPTION":"3-4 line emotional hook + question",':'"FACEBOOK_CAPTION":"",'}${hp('ig')?'"INSTAGRAM_CAPTION":"Punchy caption + 15 hashtags",':'"INSTAGRAM_CAPTION":"",'}${hp('wa')?'"WHATSAPP_MESSAGE":"2-3 shareable lines mentioning UBC News Hindi",':'"WHATSAPP_MESSAGE":"",'}${hp('tw')?'"TWITTER_POST":"Under 280 chars + 2-3 hashtags",':'"TWITTER_POST":"",'},"ok":"done"}`;
   try{
     const txt=await callAI(prompt,{json:true,temp:0.45,maxTokens:5000});
     let obj=parseGenJson(txt);
@@ -1376,6 +1575,7 @@ function renderOut(data){
   document.getElementById('gen-out').style.display='block';
 }
 function fillProd(data){
+  clearVoicePlayer();
   const map={VO_SCRIPT:'pf-vo',SMALL_HEADER:'pf-sh',VIDEO_HEADER:'pf-hdr',YOUTUBE_TITLE:'pf-yt',EDITING_INSTRUCTIONS:'pf-edit',INSTAGRAM_CAPTION:'pf-ig',WHATSAPP_MESSAGE:'pf-wa',YOUTUBE_DESCRIPTION:'pf-desc'};
   Object.entries(map).forEach(([k,id])=>{if(data[k])document.getElementById(id).value=data[k];});
   document.getElementById('prod-info').textContent='Loaded '+new Date().toLocaleTimeString('hi-IN');
@@ -1436,7 +1636,7 @@ function renderTasks(tasks){
 function filterTasks(el,f){document.querySelectorAll('#tab-tasks .ch').forEach(c=>c.classList.remove('on'));el.classList.add('on');const p=S.p;let t=p.role==='admin'||p.role==='producer'?S.tasks:S.tasks.filter(t=>t.assignedTo===p.uid);renderTasks(f==='all'?t:['pending','inprogress','done'].includes(f)?t.filter(x=>x.status===f):t.filter(x=>x.format===f));}
 function updateTask(id,st){db.ref('tasks/'+id).update({status:st,updatedAt:Date.now()}).then(()=>{const t=S.tasks.find(t=>t.id===id);if(t&&st==='done'){sendNotif(t.assignedBy,'task_done',(t.assignedToName||'Member')+' completed: '+t.headline.substring(0,50));logA((t.assignedToName||'Member')+' completed task','✅');}toast(st==='done'?'✅ Done!':'▶ Started!','ok');});}
 function delTask(id){if(!confirm('Delete task?'))return;db.ref('tasks/'+id).remove().then(()=>toast('🗑 Deleted','ok'));}
-function loadSheet(id){const t=S.tasks.find(t=>t.id===id);if(!t)return;document.getElementById('pf-vo').value=t.vo||'';document.getElementById('pf-hdr').value=t.headline||'';document.getElementById('pf-yt').value=t.ytTitle||'';document.getElementById('prod-info').textContent='Task: '+t.headline.substring(0,40);showTab('production');toast('📄 Loaded into Production Sheet','ok');}
+function loadSheet(id){const t=S.tasks.find(t=>t.id===id);if(!t)return;clearVoicePlayer();document.getElementById('pf-vo').value=t.vo||'';document.getElementById('pf-hdr').value=t.headline||'';document.getElementById('pf-yt').value=t.ytTitle||'';document.getElementById('prod-info').textContent='Task: '+t.headline.substring(0,40);showTab('production');toast('📄 Loaded into Production Sheet','ok');}
 function updateDS(){const p=S.p;document.getElementById('ds-asgn').textContent=S.tasks.filter(t=>t.status!=='done').length;document.getElementById('ds-done').textContent=S.tasks.filter(t=>t.status==='done').length;document.getElementById('ds-pend').textContent=S.tasks.filter(t=>t.assignedTo===p?.uid&&t.status==='pending').length;}
 
 function normalizeMember(m,uid){
@@ -1585,13 +1785,36 @@ function addMember(){
 }
 function removeMem(uid,name){if(!confirm('Remove '+name+'?'))return;db.ref('users/'+uid).remove().then(()=>{S.team=(S.team||[]).filter(m=>m.uid!==uid);refreshTeamViews();toast('🗑 '+name+' removed','ok');logA(name+' removed','🗑');});}
 
+function dayKey(ts){try{return new Date(ts).toISOString().slice(0,10);}catch(_){return new Date().toISOString().slice(0,10);}}
+function openGeneratedToday(){showTab('production');const r=document.getElementById('prod-range');if(r)r.value='today';renderProdHistory();}
+function renderDashCategoryMix(rows){
+  const el=document.getElementById('dash-cats');if(!el)return;
+  const today=dayKey(Date.now());
+  const src=(rows||[]).filter(r=>dayKey(r.timestamp||Date.now())===today);
+  if(!src.length){el.innerHTML='<div style="color:var(--t3);font-size:10px;">No generated content today</div>';return;}
+  const cats=['national','odisha','north_india','world','entertainment','politics','economy','crime','bihar'];
+  const total=src.length;
+  el.innerHTML='<div class="bars">'+cats.map(c=>{const n=src.filter(x=>(x.category||'national')===c).length;if(!n)return'';const w=Math.max(5,Math.round((n/total)*100));return `<div class="bar"><div class="lbl">${catLabel(c)}</div><div class="trk"><div class="fill" style="width:${w}%;"></div></div><div class="num">${n}</div></div>`;}).join('')+'</div>';
+}
+function renderDashTrend(rows){
+  const el=document.getElementById('dash-trend');if(!el)return;
+  const days=[6,5,4,3,2,1,0].map(d=>{const dt=new Date(Date.now()-d*86400000);const key=dayKey(dt.getTime());const n=(rows||[]).filter(r=>dayKey(r.timestamp||Date.now())===key).length;return {key,n,label:dt.toLocaleDateString('en-IN',{weekday:'short'})};});
+  const max=Math.max(1,...days.map(d=>d.n));
+  el.innerHTML='<div class="trend">'+days.map(d=>`<div class="tb"><div class="tbn">${d.n}</div><div class="tbv" style="height:${Math.max(10,Math.round((d.n/max)*82))}px;"></div><div class="tbl">${d.label}</div></div>`).join('')+'</div>';
+}
 function loadDash(){
   const p=S.p,myT=S.tasks.filter(t=>t.assignedTo===p?.uid),el=document.getElementById('my-tasks');
   if(!myT.length){el.innerHTML='<div style="color:var(--t3);font-size:10px;padding:5px 0;">No tasks assigned</div>';}
   else{el.innerHTML=myT.slice(0,5).map(t=>{const sc={pending:'var(--yel)',inprogress:'var(--blu)',done:'var(--grn)'}[t.status]||'var(--t3)';return `<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--b);"><div style="width:6px;height:6px;border-radius:50%;background:${sc};flex-shrink:0;"></div><div style="font-size:11px;flex:1;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.4;">${t.headline}</div><span class="tfm ${t.format==='reel'?'tf-r':'tf-l'}" style="font-size:7px;">${(t.format||'').toUpperCase()}</span></div>`;}).join('')+'<div style="font-size:9px;color:var(--t3);padding-top:6px;cursor:pointer;" onclick="showTab(\'tasks\')">View all →</div>';}
   const colors=['#FF3366','#FFD700','#0EA5E9','#00E5A0','#A855F7','#EC4899'],pe=document.getElementById('team-perf');
   pe.innerHTML=getAllMembers().slice(0,5).map((m,i)=>{const tasks=S.tasks.filter(t=>t.assignedTo===m.uid),done=tasks.filter(t=>t.status==='done').length,pct=tasks.length?Math.round((done/tasks.length)*100):0,color=colors[i%colors.length],bc=pct>=80?'var(--grn)':pct>=50?'var(--yel)':'var(--red)';return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b);"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,${color},${color}66);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;">${(m.name||m.username)[0].toUpperCase()}</div><div style="flex:1;"><div style="font-size:11px;font-weight:600;margin-bottom:3px;">${m.name||m.username}</div><div class="pb"><div class="pbf" style="width:${pct}%;background:${bc}"></div></div></div><div style="font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${bc};">${pct}%</div></div>`;}).join('');
-  db.ref('archive').orderByChild('date').equalTo(new Date().toISOString().split('T')[0]).once('value',snap=>{document.getElementById('ds-gen').textContent=snap.numChildren();});
+  db.ref('archive').limitToLast(1200).once('value',snap=>{
+    const rows=[];snap.forEach(c=>rows.push({...c.val(),id:c.key}));
+    const today=dayKey(Date.now());
+    document.getElementById('ds-gen').textContent=rows.filter(r=>dayKey(r.timestamp||Date.now())===today).length;
+    renderDashCategoryMix(rows);
+    renderDashTrend(rows);
+  });
 }
 function loadActivity(){
   db.ref('activity').limitToLast(8).on('value',snap=>{
@@ -1606,7 +1829,7 @@ function logA(text,icon='⚡'){db.ref('activity').push({text,icon,ts:Date.now(),
 let genRef=null,genCb=null;
 function listenGenHistory(){
   if(genRef&&genCb)genRef.off('value',genCb);
-  genRef=db.ref('archive').limitToLast(120);
+  genRef=db.ref('archive').limitToLast(500);
   genCb=snap=>{
     const rows=[];snap.forEach(c=>rows.push({...c.val(),id:c.key}));
     rows.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
@@ -1620,13 +1843,22 @@ function renderGenHistory(){
   const el=document.getElementById('gen-hist');if(!el)return;
   if(!S.genHist?.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No generated items yet</div></div>';renderProdHistory();return;}
   const canDel=['admin','producer'].includes(S.p?.role);
-  el.innerHTML=S.genHist.slice(0,40).map(r=>`<div class="ghi"><div class="ghh">${esc(r.headline||'Generated Content')}</div><div class="ghm"><span>🕒 ${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>🎬 ${(r.format||'reel').toUpperCase()}</span></div><div class="gha"><button class="ib st" onclick="openGenItem('${r.id}')">Open</button><button class="ib" onclick="openGenInSheet('${r.id}')">Sheet</button>${canDel?`<button class="ib dl" onclick="deleteGenItem('${r.id}')">Delete</button>`:''}</div></div>`).join('');
+  el.innerHTML=S.genHist.slice(0,120).map(r=>`<div class="ghi"><div class="ghh">${esc(r.headline||'Generated Content')}</div><div class="ghm"><span>🕒 ${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>🎬 ${(r.format||'reel').toUpperCase()}</span></div><div class="gha"><button class="ib st" onclick="openGenItem('${r.id}')">Open</button><button class="ib" onclick="openGenInSheet('${r.id}')">Sheet</button>${canDel?`<button class="ib dl" onclick="deleteGenItem('${r.id}')">Delete</button>`:''}</div></div>`).join('');
   renderProdHistory();
 }
 function renderProdHistory(){
   const el=document.getElementById('prod-hist');if(!el)return;
   if(!S.genHist?.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No generated items yet</div></div>';return;}
-  el.innerHTML=S.genHist.slice(0,60).map(r=>`<div class="fhi"><div style="font-size:11px;font-weight:700;line-height:1.4;">${esc(r.headline||'Generated Content')}</div><div class="fhm"><span>🕒 ${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>🎬 ${(r.format||'reel').toUpperCase()}</span></div><div class="gha"><button class="ib st" onclick="openGenInSheet('${r.id}')">Open in Sheet</button><button class="ib" onclick="openGenItem('${r.id}')">Open in Generate</button></div></div>`).join('');
+  const q=(document.getElementById('prod-search')?.value||'').trim().toLowerCase();
+  const range=document.getElementById('prod-range')?.value||'all';
+  const today=dayKey(Date.now()),weekStart=Date.now()-7*86400000;
+  let rows=[...S.genHist];
+  if(range==='today')rows=rows.filter(r=>dayKey(r.timestamp||Date.now())===today);
+  if(range==='week')rows=rows.filter(r=>(r.timestamp||0)>=weekStart);
+  if(q)rows=rows.filter(r=>String(r.headline||'').toLowerCase().includes(q)||String(r.videoHeader||'').toLowerCase().includes(q)||String(r.category||'').toLowerCase().includes(q));
+  rows=rows.slice(0,300);
+  if(!rows.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No matching generated items</div></div>';return;}
+  el.innerHTML='<div class="prtbl"><div class="prhd"><div>Time</div><div>Headline</div><div>Format</div><div>Category</div><div style="text-align:right;">Actions</div></div>'+rows.map(r=>`<div class="prr"><div class="prm">${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div><div class="prh" onclick="openGenInSheet('${r.id}')">${esc(r.headline||'Generated Content')}</div><div><span class="tfm ${(r.format||'reel')==='reel'?'tf-r':'tf-l'}" style="font-size:8px;">${((r.format||'reel').toUpperCase())}</span></div><div><span class="tg ${(r.category||'national')}" style="font-size:8px;">${catLabel(r.category||'national')}</span></div><div class="pra"><button class="ib st" onclick="openGenInSheet('${r.id}')">Sheet</button><button class="ib" onclick="openGenItem('${r.id}')">Generate</button></div></div>`).join('')+'</div>';
 }
 
 function payloadFromArchive(r){
@@ -1723,13 +1955,184 @@ function updateProfile(){
   }).catch(e=>toast('❌ '+e.message,'err'));
 }
 
-function saveCfg(){const rawGem=document.getElementById('cfg-gem').value.trim(),gem=cleanGemKey(rawGem),cla=document.getElementById('cfg-cla').value.trim();if(!gem){toast(rawGem?'⚠ Invalid/blocked Gemini key. Paste a new AI Studio key':'⚠ Enter Gemini API key','err');return;}S.gk=gem;S.ck=cla;document.getElementById('cfg-gem').value=gem;db.ref('settings/config').set({geminiKey:gem,claudeKey:cla}).then(()=>{updateSP();const ok=document.getElementById('cfg-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('✅ Saved! Testing...','ok');testGem();});}
+function setActiveVoice(id){
+  const voices=normalizeVoiceList(S.evoices);
+  const picked=voices.find(v=>v.id===id)||voices[0];
+  S.evoices=voices;
+  S.evoice=picked?.id||ELEVEN_VOICE_DEFAULT;
+  const sel=document.getElementById('vo-voice-select');if(sel&&sel.value!==S.evoice)sel.value=S.evoice;
+  const ev=document.getElementById('cfg-el-voice');if(ev)ev.value=S.evoice;
+  const vn=document.getElementById('cfg-voice-name');if(vn)vn.value=getVoiceName(S.evoice);
+  updateSP();
+}
+
+function renderVoiceLibrary(){
+  S.evoices=normalizeVoiceList(S.evoices);
+  if(!S.evoices.some(v=>v.id===S.evoice))S.evoice=S.evoices[0]?.id||ELEVEN_VOICE_DEFAULT;
+  const sel=document.getElementById('vo-voice-select');
+  if(sel){
+    sel.innerHTML=S.evoices.map(v=>`<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('');
+    sel.value=S.evoice;
+  }
+  const list=document.getElementById('cfg-voice-list');
+  if(list){
+    list.innerHTML=S.evoices.map(v=>`<div class="tmi"><div class="tmr1"><div><div class="tmn">${esc(v.name)}</div><div class="tmu">${esc(v.id)}</div></div>${v.id===S.evoice?'<span class="mc-rl rl-producer">ACTIVE</span>':''}</div><div class="tmr2"><button class="ib st" onclick="setActiveVoice('${v.id.replace(/'/g,"\\'")}')">Use</button>${S.evoices.length>1?`<button class="ib dl" onclick="removeVoicePreset('${v.id.replace(/'/g,"\\'")}')">Remove</button>`:''}</div></div>`).join('');
+  }
+}
+
+function addVoicePreset(){
+  const id=(document.getElementById('cfg-el-voice')?.value||'').trim();
+  const name=(document.getElementById('cfg-voice-name')?.value||'').trim();
+  if(!id){toast('⚠ Enter Voice ID first','err');return;}
+  const rows=[...normalizeVoiceList(S.evoices)];
+  const k=id.toLowerCase();
+  const idx=rows.findIndex(v=>String(v.id).toLowerCase()===k);
+  const nm=name||rows[idx]?.name||('Voice '+(rows.length+1));
+  if(idx>=0)rows[idx]={id,name:nm};else rows.push({id,name:nm});
+  S.evoices=normalizeVoiceList(rows);
+  S.evoice=id;
+  renderVoiceLibrary();
+  toast('✅ Voice saved. Click SAVE TTS to persist.','ok');
+}
+
+function removeVoicePreset(id){
+  if((S.evoices||[]).length<=1){toast('⚠ At least one voice required','err');return;}
+  S.evoices=normalizeVoiceList((S.evoices||[]).filter(v=>v.id!==id));
+  if(S.evoice===id)S.evoice=S.evoices[0]?.id||ELEVEN_VOICE_DEFAULT;
+  renderVoiceLibrary();
+  toast('🗑 Voice removed. Click SAVE TTS to persist.','ok');
+}
+
+function saveCfg(){
+  const rawGemInput=document.getElementById('cfg-gem').value.trim();
+  const rawGem=rawGemInput||S.gk||'';
+  const gem=cleanGemKey(rawGem),cla=document.getElementById('cfg-cla').value.trim();
+  const ttsProvider=document.getElementById('cfg-tts-provider')?.value==='elevenlabs'?'elevenlabs':'browser';
+  const elKey=(document.getElementById('cfg-el-key')?.value||'').trim();
+  const elVoiceRaw=(document.getElementById('cfg-el-voice')?.value||'').trim();
+  const voiceNameRaw=(document.getElementById('cfg-voice-name')?.value||'').trim();
+  const elModel=((document.getElementById('cfg-el-model')?.value||'').trim()||ELEVEN_MODEL_DEFAULT);
+  if(!gem){toast(rawGemInput?'⚠ Invalid/blocked Gemini key. Paste a new AI Studio key':'⚠ Enter Gemini API key','err');return;}
+  let voices=normalizeVoiceList(S.evoices);
+  const elVoice=elVoiceRaw||S.evoice||voices[0]?.id||ELEVEN_VOICE_DEFAULT;
+  const idx=voices.findIndex(v=>String(v.id).toLowerCase()===String(elVoice).toLowerCase());
+  if(idx>=0){
+    if(voiceNameRaw)voices[idx]={id:voices[idx].id,name:voiceNameRaw};
+  }else{
+    voices.push({id:elVoice,name:voiceNameRaw||('Voice '+(voices.length+1))});
+  }
+  voices=normalizeVoiceList(voices);
+  S.gk=gem;S.ck=cla;S.ttsProvider=ttsProvider;S.ek=elKey;S.evoices=voices;S.evoice=voices.some(v=>v.id===elVoice)?elVoice:voices[0].id;S.emodel=elModel;
+  document.getElementById('cfg-gem').value=gem;
+  renderVoiceLibrary();
+  db.ref('settings/config').set({geminiKey:gem,claudeKey:cla,ttsProvider,elevenLabsKey:elKey,elevenVoiceId:S.evoice,elevenModelId:elModel,elevenVoices:S.evoices}).then(()=>{
+    updateSP();
+    const ok=document.getElementById('cfg-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);
+    toast('✅ Saved! Testing Gemini...','ok');
+    testGem();
+  });
+}
 async function testGem(){try{const r=await callAI('Reply OK');if(r)toast('✦ Gemini connected!','ok');}catch(e){toast('⚠ Key failed: '+e.message,'err');}}
 function changePw(){const pw=document.getElementById('cfg-pw').value;if(!pw||pw.length<4){toast('⚠ Min 4 chars','err');return;}db.ref('users/'+S.p.uid).update({password:pw}).then(()=>{document.getElementById('cfg-pw').value='';const ok=document.getElementById('pw-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);toast('🔒 Password changed!','ok');});}
-function updateSP(){const sp=document.getElementById('sp-gem'),sl=document.getElementById('sl-gem');if(S.gk){sp.className='spl sp-ok';sl.textContent='GEMINI: Connected';}else{sp.className='spl sp-w';sl.textContent='GEMINI: Not set';}}
+function updateSP(){
+  const sp=document.getElementById('sp-gem'),sl=document.getElementById('sl-gem');
+  if(S.gk){sp.className='spl sp-ok';sl.textContent='GEMINI: Connected';}else{sp.className='spl sp-w';sl.textContent='GEMINI: Not set';}
+  const tp=document.getElementById('sp-tts'),tl=document.getElementById('sl-tts');
+  if(tp&&tl){
+    if(S.ttsProvider==='elevenlabs'){
+      if(S.ek&&S.evoice){tp.className='spl sp-ok';tl.textContent='TTS: ElevenLabs ready ('+((S.evoices||[]).length||1)+' voices)';}
+      else{tp.className='spl sp-w';tl.textContent='TTS: ElevenLabs key/voice missing';}
+    }else{
+      tp.className='spl sp-ok';tl.textContent='TTS: Browser Hindi';
+    }
+  }
+}
+
+function getVoText(){
+  const t=(document.getElementById('pf-vo')?.value||'').trim()||(S.gd?.VO_SCRIPT||'').trim();
+  return t.replace(/\s+/g,' ').trim();
+}
+
+function setVoiceStatus(msg,type){
+  const s=document.getElementById('vo-status');if(!s)return;
+  s.textContent=msg;
+  s.style.color=type==='ok'?'var(--grn)':type==='err'?'var(--red)':'var(--t2)';
+}
+
+function clearVoicePlayer(){
+  if(S.ttsAudio){try{URL.revokeObjectURL(S.ttsAudio);}catch(_){}S.ttsAudio='';}
+  const a=document.getElementById('vo-audio');
+  if(a){a.pause();a.removeAttribute('src');a.load();}
+  const d=document.getElementById('vo-download');if(d)d.disabled=true;
+  setVoiceStatus('Voice not generated');
+}
+
+function pickHindiVoice(){
+  const voices=window.speechSynthesis?.getVoices?.()||[];
+  return voices.find(v=>/^hi(-|_)/i.test(v.lang))||voices.find(v=>/hindi/i.test(v.name))||voices.find(v=>/en-in/i.test(v.lang))||null;
+}
+
+function previewHindiVoice(){
+  const text=getVoText();
+  if(!text){toast('⚠ VO script empty','err');return;}
+  if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){toast('⚠ Browser TTS not supported','err');return;}
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text.slice(0,2200));
+  const v=pickHindiVoice();if(v)u.voice=v;
+  u.lang=v?.lang||'hi-IN';
+  u.rate=1;u.pitch=1;
+  u.onstart=()=>setVoiceStatus('Preview playing in browser...','ok');
+  u.onend=()=>setVoiceStatus('Preview finished','ok');
+  u.onerror=()=>setVoiceStatus('Preview failed','err');
+  window.speechSynthesis.speak(u);
+}
+
+async function parseElevenErr(res){
+  try{
+    const t=await res.text();
+    try{const j=JSON.parse(t);return j?.detail?.message||j?.message||t||('Error '+res.status);}catch(_){return t||('Error '+res.status);}
+  }catch(_){return 'Error '+res.status;}
+}
+
+async function genHindiVoice(){
+  const text=getVoText();
+  if(!text){toast('⚠ VO script empty','err');return;}
+  if(S.ttsProvider!=='elevenlabs'){previewHindiVoice();toast('ℹ Using browser Hindi preview (set ElevenLabs in Settings for MP3)','ok');return;}
+  if(!S.ek){toast('⚠ Add ElevenLabs API key in Settings','err');showTab('settings');return;}
+  const selVoice=(document.getElementById('vo-voice-select')?.value||S.evoice||'').trim();
+  if(selVoice)S.evoice=selVoice;
+  if(!S.evoice){toast('⚠ Add ElevenLabs Voice ID in Settings','err');showTab('settings');return;}
+  const btn=document.querySelector('button[onclick="genHindiVoice()"]');if(btn)btn.disabled=true;
+  setVoiceStatus('Generating MP3 from ElevenLabs ('+getVoiceName(S.evoice)+')...');
+  try{
+    const body={text,model_id:S.emodel||ELEVEN_MODEL_DEFAULT,output_format:'mp3_44100_128',voice_settings:{stability:0.45,similarity_boost:0.8,style:0.2,speed:1}};
+    const r=await fetch(ELEVEN_API+encodeURIComponent(S.evoice),{method:'POST',headers:{'xi-api-key':S.ek,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify(body)});
+    if(!r.ok)throw new Error(await parseElevenErr(r));
+    const blob=await r.blob();
+    if(!blob||!blob.size)throw new Error('Empty audio response from ElevenLabs');
+    if(S.ttsAudio){try{URL.revokeObjectURL(S.ttsAudio);}catch(_){}}
+    const url=URL.createObjectURL(blob);S.ttsAudio=url;
+    const a=document.getElementById('vo-audio');if(a){a.src=url;a.play().catch(()=>{});}
+    const d=document.getElementById('vo-download');if(d)d.disabled=false;
+    setVoiceStatus('Voice ready ('+getVoiceName(S.evoice)+')','ok');
+    toast('✅ Hindi voice generated','ok');
+  }catch(e){
+    setVoiceStatus('Voice generation failed','err');
+    toast('❌ TTS failed: '+(e.message||'Unknown error'),'err');
+  }
+  if(btn)btn.disabled=false;
+}
+
+function downloadVoice(){
+  if(!S.ttsAudio){toast('⚠ Generate voice first','err');return;}
+  const a=document.createElement('a');
+  a.href=S.ttsAudio;
+  a.download='UBC_VO_'+new Date().toISOString().replace(/[:.]/g,'-')+'.mp3';
+  a.click();
+}
 
 function copyFullSheet(){let txt='=== UBC PRODUCTION SHEET ===\n\n';[['pf-vo','VO SCRIPT'],['pf-sh','SMALL HEADER'],['pf-hdr','VIDEO HEADER'],['pf-yt','YOUTUBE TITLE'],['pf-edit','EDITING GUIDE'],['pf-ig','INSTAGRAM'],['pf-wa','WHATSAPP'],['pf-desc','YOUTUBE DESC']].forEach(([id,lbl])=>{const v=document.getElementById(id).value.trim();if(v)txt+='--- '+lbl+' ---\n'+v+'\n\n';});navigator.clipboard.writeText(txt).then(()=>toast('📋 Sheet copied!','ok'));}
-function clearSheet(){['pf-vo','pf-sh','pf-hdr','pf-yt','pf-edit','pf-ig','pf-wa','pf-desc'].forEach(id=>document.getElementById(id).value='');document.getElementById('prod-info').textContent='Cleared';toast('🗑 Cleared','ok');}
+function clearSheet(){['pf-vo','pf-sh','pf-hdr','pf-yt','pf-edit','pf-ig','pf-wa','pf-desc'].forEach(id=>document.getElementById(id).value='');clearVoicePlayer();document.getElementById('prod-info').textContent='Cleared';toast('🗑 Cleared','ok');}
 function cpF(id){const v=document.getElementById(id).value;if(!v){toast('⚠ Empty','err');return;}navigator.clipboard.writeText(v).then(()=>toast('📋 Copied!','ok'));}
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
