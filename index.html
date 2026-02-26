@@ -493,6 +493,14 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
               <div class="gpnl" style="margin-top:10px;">
                 <div class="gpt">🗂 GENERATED HISTORY</div>
                 <div style="font-size:9px;color:var(--t2);margin-bottom:8px;">Open old generated items, edit in Production Sheet, and reuse quickly.</div>
+                <div class="phf" style="margin-bottom:8px;">
+                  <input id="gen-search" type="text" placeholder="Search generated headline..." oninput="renderGenHistory()">
+                  <select id="gen-range" onchange="renderGenHistory()">
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">Last 7 Days</option>
+                  </select>
+                </div>
                 <div class="ghl" id="gen-hist"></div>
               </div>
             </div>
@@ -729,7 +737,7 @@ const FEED_BUCKETS=[
 const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],editor:['dashboard','production','tasks','chat','team','settings'],anchor:['dashboard','production','tasks','chat','team','settings']};
-let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',ek:'',evoice:ELEVEN_VOICE_DEFAULT,evoices:[{id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}],emodel:ELEVEN_MODEL_DEFAULT,ttsProvider:'browser',ttsAudio:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[]};
+let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',ek:'',evoice:ELEVEN_VOICE_DEFAULT,evoices:[{id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}],emodel:ELEVEN_MODEL_DEFAULT,ttsProvider:'browser',ttsAudio:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[],prodForceToday:false};
 
 function cleanGemKey(key){const k=(key||'').trim();return LEGACY_GEM_KEYS.has(k)?'':k;}
 function normalizeVoiceList(raw){
@@ -861,7 +869,12 @@ function showTab(id){
   if(id==='chat'){loadChat();document.getElementById('cb').classList.remove('on');}
   if(id==='tasks')renderTasks(S.tasks);
   if(id==='team'){renderTeam();renderTeamDirectory(S.team);}
-  if(id==='production'){renderProdHistory();renderVoiceLibrary();}
+  if(id==='production'){
+    const pr=document.getElementById('prod-range');
+    if(pr&&!S.prodForceToday)pr.value='all';
+    S.prodForceToday=false;
+    renderProdHistory();renderVoiceLibrary();
+  }
   if(id==='settings')renderVoiceLibrary();
   if(id==='dashboard')loadDash();
 }
@@ -1514,6 +1527,22 @@ ${String(raw||'').slice(0,9000)}`;
   return callAI(rp,{json:true,temp:0,maxTokens:4500});
 }
 
+function extractFactHints(topic){
+  const t=String(topic||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  const picks=t.filter(x=>/[0-9०-९]/.test(x)||/किलोमीटर|किमी|करोड़|लाख|हजार|प्रतिशत|दिन|घंटा|year|km|crore|lakh|percent|project|tender|budget|deadline/i.test(x));
+  const alt=t.filter(x=>/सारांश|source|स्रोत|समय|category|श्रेणी/i.test(x));
+  const out=[...new Set([...picks,...alt])].slice(0,5);
+  return out;
+}
+
+function enforcePowerEnding(vo){
+  const text=String(vo||'').trim();
+  if(!text)return text;
+  const cta='कॉमेंट में अपनी राय जरूर बताएं और ऐसी ही तथ्यात्मक खबरों के लिए UBC News Hindi को फॉलो/सब्सक्राइब करना न भूलें।';
+  if(/कॉमेंट|comment/i.test(text)&&/फॉलो|subscribe|सब्सक्राइब/i.test(text))return text;
+  return text.replace(/\s+$/,'')+'\n\n'+cta;
+}
+
 async function doGenerate(){
   const topic=document.getElementById('topic-box').value.trim();
   if(!topic){toast('⚠ Select story or type topic','err');return;}
@@ -1527,18 +1556,22 @@ async function doGenerate(){
   const lN=S.lang==='hindi'?'Pure Hindi throughout':'Hindi VO with English keywords in titles';
   const ex=S.tex?'\nStyle:\n'+S.tex.substring(0,400):'';const ctx=S.tctx?'\nChannel: '+S.tctx.substring(0,200):'';
   const hp=p=>S.plat.includes(p);
+  const facts=extractFactHints(topic);
+  const factBlock=facts.length?'\nMandatory factual points (must include without changing meaning):\n- '+facts.join('\n- '):'';
   const prompt=`You are prime-time Hindi news writer for UBC News Hindi (national-first, plus Odisha, North India, world and entertainment). Tone: ${S.tone}. Format: ${fN}. Language: ${lN}.${ctx}${ex}
-Story: ${topic}
+Story: ${topic}${factBlock}
 Write high-impact, newsroom-grade output: sharp hook, factual flow, no weak filler, no repetition.
 Critical rules:
 - Use ONLY facts available in story input. Do NOT invent numbers, names, allegations, or legal conclusions.
 - If facts are limited, clearly mark it as "प्रारंभिक रिपोर्ट" and avoid over-claiming.
 - Keep language broadcast-quality Hindi, direct and natural.
+- Avoid vague filler lines like "विकास की रफ्तार तेज" unless directly supported by story facts.
+- If numbers/distances/money are present, keep exact figures in VO.
 VO requirements:
 - Powerful hook in first 1-2 lines
 - 3-5 concrete facts/angles
 - 1 accountability question
-- strong closing line for viewers
+- strong closing line for viewers with CTA to comment + follow/subscribe
 - natural Hindi broadcast language (not robotic, not awkward)
  - VO length target: ${dur}
 Return ONLY valid JSON, no markdown: {"VO_SCRIPT":"Hindi VO script","SMALL_HEADER":"2-4 word slug/strap line","VIDEO_HEADER":"5-7 word punchy Hindi title","EDITING_INSTRUCTIONS":"Shot-by-shot timing + on-screen text + fact callouts + B-roll cues",${hp('yt')?'"YOUTUBE_TITLE":"SEO title under 60 chars","YOUTUBE_DESCRIPTION":"150 word desc + hashtags",':'"YOUTUBE_TITLE":"","YOUTUBE_DESCRIPTION":"",'}${hp('fb')?'"FACEBOOK_CAPTION":"3-4 line emotional hook + question",':'"FACEBOOK_CAPTION":"",'}${hp('ig')?'"INSTAGRAM_CAPTION":"Punchy caption + 15 hashtags",':'"INSTAGRAM_CAPTION":"",'}${hp('wa')?'"WHATSAPP_MESSAGE":"2-3 shareable lines mentioning UBC News Hindi",':'"WHATSAPP_MESSAGE":"",'}${hp('tw')?'"TWITTER_POST":"Under 280 chars + 2-3 hashtags",':'"TWITTER_POST":"",'},"ok":"done"}`;
@@ -1552,13 +1585,14 @@ Return ONLY valid JSON, no markdown: {"VO_SCRIPT":"Hindi VO script","SMALL_HEADE
     }
     if(!obj)throw new Error('Invalid AI response - please try again');
     S.gd=normalizeGenData(obj);
+    S.gd.VO_SCRIPT=enforcePowerEnding(S.gd.VO_SCRIPT);
     if(!S.gd.VO_SCRIPT&&!S.gd.VIDEO_HEADER)throw new Error('AI response missing required content. Try again.');
     const wc=String(S.gd.VO_SCRIPT||'').trim().split(/\s+/).filter(Boolean).length;
     const minW=S.fmt==='reel'?75:150;
     if(wc<minW){
       const improve=await callAI(prompt+'\nIMPORTANT: Make VO script more detailed and high-impact. Keep strict JSON.',{json:true,temp:0.45,maxTokens:5000});
       const obj2=parseGenJson(improve)||parseGenJson(await repairGenJson(improve));
-      if(obj2)S.gd=normalizeGenData(obj2);
+      if(obj2){S.gd=normalizeGenData(obj2);S.gd.VO_SCRIPT=enforcePowerEnding(S.gd.VO_SCRIPT);}
     }
     S.gd._story=S.story||{headline:topic};S.gd._fmt=S.fmt;S.gd._ts=Date.now();
     renderOut(S.gd);fillProd(S.gd);
@@ -1786,7 +1820,7 @@ function addMember(){
 function removeMem(uid,name){if(!confirm('Remove '+name+'?'))return;db.ref('users/'+uid).remove().then(()=>{S.team=(S.team||[]).filter(m=>m.uid!==uid);refreshTeamViews();toast('🗑 '+name+' removed','ok');logA(name+' removed','🗑');});}
 
 function dayKey(ts){try{return new Date(ts).toISOString().slice(0,10);}catch(_){return new Date().toISOString().slice(0,10);}}
-function openGeneratedToday(){showTab('production');const r=document.getElementById('prod-range');if(r)r.value='today';renderProdHistory();}
+function openGeneratedToday(){S.prodForceToday=true;showTab('production');const r=document.getElementById('prod-range');if(r)r.value='today';renderProdHistory();}
 function renderDashCategoryMix(rows){
   const el=document.getElementById('dash-cats');if(!el)return;
   const today=dayKey(Date.now());
@@ -1842,8 +1876,16 @@ function listenGenHistory(){
 function renderGenHistory(){
   const el=document.getElementById('gen-hist');if(!el)return;
   if(!S.genHist?.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No generated items yet</div></div>';renderProdHistory();return;}
+  const q=(document.getElementById('gen-search')?.value||'').trim().toLowerCase();
+  const range=document.getElementById('gen-range')?.value||'all';
+  const today=dayKey(Date.now()),weekStart=Date.now()-7*86400000;
+  let rows=[...S.genHist];
+  if(range==='today')rows=rows.filter(r=>dayKey(r.timestamp||Date.now())===today);
+  if(range==='week')rows=rows.filter(r=>(r.timestamp||0)>=weekStart);
+  if(q)rows=rows.filter(r=>String(r.headline||'').toLowerCase().includes(q)||String(r.videoHeader||'').toLowerCase().includes(q)||String(r.category||'').toLowerCase().includes(q));
+  if(!rows.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No matching generated items</div></div>';renderProdHistory();return;}
   const canDel=['admin','producer'].includes(S.p?.role);
-  el.innerHTML=S.genHist.slice(0,120).map(r=>`<div class="ghi"><div class="ghh">${esc(r.headline||'Generated Content')}</div><div class="ghm"><span>🕒 ${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>🎬 ${(r.format||'reel').toUpperCase()}</span></div><div class="gha"><button class="ib st" onclick="openGenItem('${r.id}')">Open</button><button class="ib" onclick="openGenInSheet('${r.id}')">Sheet</button>${canDel?`<button class="ib dl" onclick="deleteGenItem('${r.id}')">Delete</button>`:''}</div></div>`).join('');
+  el.innerHTML=rows.slice(0,250).map(r=>`<div class="ghi"><div class="ghh">${esc(r.headline||'Generated Content')}</div><div class="ghm"><span>🕒 ${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>🎬 ${(r.format||'reel').toUpperCase()}</span></div><div class="gha"><button class="ib st" onclick="openGenItem('${r.id}')">Open</button><button class="ib" onclick="openGenInSheet('${r.id}')">Sheet</button>${canDel?`<button class="ib dl" onclick="deleteGenItem('${r.id}')">Delete</button>`:''}</div></div>`).join('');
   renderProdHistory();
 }
 function renderProdHistory(){
@@ -1857,7 +1899,14 @@ function renderProdHistory(){
   if(range==='week')rows=rows.filter(r=>(r.timestamp||0)>=weekStart);
   if(q)rows=rows.filter(r=>String(r.headline||'').toLowerCase().includes(q)||String(r.videoHeader||'').toLowerCase().includes(q)||String(r.category||'').toLowerCase().includes(q));
   rows=rows.slice(0,300);
-  if(!rows.length){el.innerHTML='<div class="empty" style="padding:12px;"><div class="em">No matching generated items</div></div>';return;}
+  if(!rows.length&&range!=='all'){
+    const pr=document.getElementById('prod-range');if(pr)pr.value='all';
+    rows=[...S.genHist].filter(r=>q?(String(r.headline||'').toLowerCase().includes(q)||String(r.videoHeader||'').toLowerCase().includes(q)||String(r.category||'').toLowerCase().includes(q)):true).slice(0,300);
+  }
+  if(!rows.length){
+    el.innerHTML='<div class="prtbl"><div class="prhd"><div>Time</div><div>Headline</div><div>Format</div><div>Category</div><div style="text-align:right;">Actions</div></div><div class="prr"><div class="prm">-</div><div class="prh" style="cursor:default;">No matching generated items</div><div>-</div><div>-</div><div class="pra"><button class="ib" onclick="document.getElementById(\'prod-search\').value=\'\';document.getElementById(\'prod-range\').value=\'all\';renderProdHistory();">Reset</button></div></div></div>';
+    return;
+  }
   el.innerHTML='<div class="prtbl"><div class="prhd"><div>Time</div><div>Headline</div><div>Format</div><div>Category</div><div style="text-align:right;">Actions</div></div>'+rows.map(r=>`<div class="prr"><div class="prm">${new Date(r.timestamp||Date.now()).toLocaleString('hi-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div><div class="prh" onclick="openGenInSheet('${r.id}')">${esc(r.headline||'Generated Content')}</div><div><span class="tfm ${(r.format||'reel')==='reel'?'tf-r':'tf-l'}" style="font-size:8px;">${((r.format||'reel').toUpperCase())}</span></div><div><span class="tg ${(r.category||'national')}" style="font-size:8px;">${catLabel(r.category||'national')}</span></div><div class="pra"><button class="ib st" onclick="openGenInSheet('${r.id}')">Sheet</button><button class="ib" onclick="openGenItem('${r.id}')">Generate</button></div></div>`).join('')+'</div>';
 }
 
