@@ -137,6 +137,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .tg.economy{background:rgba(0,229,160,0.1);color:var(--grn);}
 .tg.world{background:rgba(56,189,248,0.14);color:#38BDF8;}
 .tg.entertainment{background:rgba(236,72,153,0.14);color:#EC4899;}
+.tg.lang{background:rgba(255,255,255,0.06);color:var(--t2);}
 .bsm{padding:4px 8px;border-radius:6px;font-size:9px;font-weight:700;cursor:pointer;border:1px solid;transition:all 0.16s;white-space:nowrap;font-family:"Space Grotesk",sans-serif;}
 .bsm.g{background:rgba(255,51,102,0.09);border-color:rgba(255,51,102,0.25);color:var(--red);}
 .bsm.a{background:rgba(14,165,233,0.07);border-color:rgba(14,165,233,0.2);color:var(--blu);}
@@ -433,7 +434,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
             <div class="fsc"><div class="fscv" id="sf-vir" style="color:var(--pnk)">—</div><div class="fscl">World/Ent</div></div>
           </div>
           <div class="cdb">
-            <span style="font-size:9px;color:var(--t2);letter-spacing:1px;">AUTO REFRESH</span>
+            <span style="font-size:9px;color:var(--t2);letter-spacing:1px;">AUTO REFRESH (30 MIN)</span>
             <span class="cdt" id="countdown">--:--</span>
             <div class="cdp"><div class="cdf" id="cd-f" style="width:100%"></div></div>
             <button onclick="showLiveFeed()" style="padding:5px 10px;background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.25);border-radius:7px;color:var(--blu);font-size:9px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;">🛰 LIVE</button>
@@ -453,7 +454,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
             <button class="ch" onclick="filterFeed(this,'bihar')">🗺 BIHAR</button>
             <div class="sbb"><input type="text" placeholder="Search..." oninput="searchFeed(this.value)"></div>
           </div>
-          <div id="news-list"><div class="empty"><div class="ei">📡</div><div class="em">Click REFRESH to load latest national, Odisha, North India, world and entertainment news</div></div></div>
+          <div id="news-list"><div class="empty"><div class="ei">📡</div><div class="em">Loading live English + Hindi news across national, Odisha, North India, world and entertainment...</div></div></div>
         </div>
 
         <!-- GENERATE -->
@@ -709,6 +710,7 @@ const db=firebase.database();
 const GAPI_MODELS='https://generativelanguage.googleapis.com/v1beta/models';
 const GAPI_GENERATE='https://generativelanguage.googleapis.com/v1beta/models/';
 const GM_PREF=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash-latest','gemini-1.5-flash'];
+const FEED_REFRESH_SECONDS=1800;
 const FEED_LIMIT=75;
 const FEED_MIN_NEW=18;
 const FEED_RECENT_MIN=60;
@@ -724,20 +726,20 @@ const ELEVEN_MODEL_DEFAULT='eleven_multilingual_v2';
 const FEED_ARCHIVE_PATH='feedArchive';
 const FEED_ARCHIVE_MAX=80;
 const FEED_BUCKETS=[
-  {category:'national',count:26,query:'(India OR "Government of India" OR Parliament OR Supreme Court) when:1h'},
-  {category:'odisha',count:12,query:'(Odisha OR Bhubaneswar OR Cuttack OR Puri) when:2h'},
-  {category:'north_india',count:10,query:'("North India" OR Delhi OR "Uttar Pradesh" OR Punjab OR Haryana OR Rajasthan OR Uttarakhand OR Himachal) when:2h'},
-  {category:'world',count:9,query:'("World news" OR international OR diplomacy OR conflict) when:1h'},
-  {category:'entertainment',count:8,query:'(Bollywood OR "Indian entertainment" OR celebrity OR film) when:3h'},
-  {category:'politics',count:4,query:'("India politics" OR election OR parliament) when:2h'},
-  {category:'economy',count:3,query:'("India economy" OR inflation OR market OR rupee) when:2h'},
-  {category:'crime',count:2,query:'("India crime" OR police OR court) when:2h'},
-  {category:'bihar',count:1,query:'(Bihar) when:3h'}
+  {category:'national',count:26,queryEn:'(India OR "Government of India" OR Parliament OR Supreme Court) when:1h',queryHi:'(भारत OR संसद OR सुप्रीम कोर्ट OR केंद्र सरकार) when:1h'},
+  {category:'odisha',count:12,queryEn:'(Odisha OR Bhubaneswar OR Cuttack OR Puri) when:2h',queryHi:'(ओडिशा OR भुवनेश्वर OR कटक OR पुरी) when:2h'},
+  {category:'north_india',count:10,queryEn:'("North India" OR Delhi OR "Uttar Pradesh" OR Punjab OR Haryana OR Rajasthan OR Uttarakhand OR Himachal) when:2h',queryHi:'("उत्तर भारत" OR दिल्ली OR "उत्तर प्रदेश" OR पंजाब OR हरियाणा OR राजस्थान OR उत्तराखंड OR हिमाचल) when:2h'},
+  {category:'world',count:9,queryEn:'("World news" OR international OR diplomacy OR conflict) when:1h',queryHi:'("विश्व समाचार" OR अंतरराष्ट्रीय OR कूटनीति OR संघर्ष) when:1h'},
+  {category:'entertainment',count:8,queryEn:'(Bollywood OR "Indian entertainment" OR celebrity OR film) when:3h',queryHi:'(बॉलीवुड OR मनोरंजन OR सेलिब्रिटी OR फिल्म) when:3h'},
+  {category:'politics',count:4,queryEn:'("India politics" OR election OR parliament) when:2h',queryHi:'("भारतीय राजनीति" OR चुनाव OR संसद) when:2h'},
+  {category:'economy',count:3,queryEn:'("India economy" OR inflation OR market OR rupee) when:2h',queryHi:'("भारतीय अर्थव्यवस्था" OR महंगाई OR बाजार OR रुपया) when:2h'},
+  {category:'crime',count:2,queryEn:'("India crime" OR police OR court) when:2h',queryHi:'("भारत अपराध" OR पुलिस OR अदालत) when:2h'},
+  {category:'bihar',count:1,queryEn:'(Bihar) when:3h',queryHi:'(बिहार) when:3h'}
 ];
 const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
 const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],editor:['dashboard','production','tasks','chat','team','settings'],anchor:['dashboard','production','tasks','chat','team','settings']};
-let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',ek:'',evoice:ELEVEN_VOICE_DEFAULT,evoices:[{id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}],emodel:ELEVEN_MODEL_DEFAULT,ttsProvider:'browser',ttsAudio:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:3600,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[],prodForceToday:false};
+let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',ek:'',evoice:ELEVEN_VOICE_DEFAULT,evoices:[{id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}],emodel:ELEVEN_MODEL_DEFAULT,ttsProvider:'browser',ttsAudio:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:FEED_REFRESH_SECONDS,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[],prodForceToday:false,feedLoading:false};
 
 function cleanGemKey(key){const k=(key||'').trim();return LEGACY_GEM_KEYS.has(k)?'':k;}
 function normalizeVoiceList(raw){
@@ -828,7 +830,7 @@ function doLogout(){
   if(S.p)db.ref('users/'+S.p.uid+'/lastSeen').set(Date.now());
   if(S.ttsAudio){try{URL.revokeObjectURL(S.ttsAudio);}catch(_){}S.ttsAudio='';}
   if(window.speechSynthesis)window.speechSynthesis.cancel();
-  db.ref('tasks').off();db.ref('messages').off();db.ref('notifications').off();stopTeamListener();stopFeedArchiveListener();stopChatListener();S.p=null;
+  db.ref('tasks').off();db.ref('messages').off();db.ref('notifications').off();stopTeamListener();stopFeedArchiveListener();stopChatListener();if(S.cdt)clearInterval(S.cdt);S.cdt=null;S.cds=FEED_REFRESH_SECONDS;S.feedLoading=false;S.news=[];S.fn=[];S.p=null;
   document.getElementById('app').classList.remove('on');document.getElementById('app').style.display='none';
   document.getElementById('lg').style.display='flex';
   document.getElementById('l-user').value='';document.getElementById('l-pass').value='';
@@ -856,7 +858,7 @@ function init(){
   const nm=document.getElementById('cfg-name');if(nm)nm.value=p.name||'';
   clearVoicePlayer();
   renderVoiceLibrary();
-  updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();listenGenHistory();listenFeedArchive();renderFeedHistory();
+  updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();listenGenHistory();listenFeedArchive();renderFeedHistory();startCD(true);if(allowed.includes('feed'))loadFeed('init');
 }
 
 const TTL={dashboard:'DASHBOARD',feed:'LIVE NEWS FEED',generate:'GENERATE CONTENT',production:'PRODUCTION SHEET',tasks:'TASK MANAGER',chat:'TEAM CHAT',team:'TEAM MANAGEMENT',reports:'REPORTS',tone:'TONE & STYLE',settings:'SETTINGS'};
@@ -876,6 +878,7 @@ function showTab(id){
     renderProdHistory();renderVoiceLibrary();
   }
   if(id==='settings')renderVoiceLibrary();
+  if(id==='feed'&&!S.news.length&&!S.feedLoading)loadFeed('tab');
   if(id==='dashboard')loadDash();
 }
 function setAI(ai){S.ai=ai;document.getElementById('ai-gem').classList.toggle('on',ai==='gemini');document.getElementById('ai-cla').classList.toggle('on',ai==='claude');document.getElementById('ai-lbl').textContent=ai==='gemini'?'✦ GEMINI POWERED':'◈ CLAUDE POWERED';toast(ai==='gemini'?'Switched to Gemini':'Switched to Claude');}
@@ -1119,7 +1122,9 @@ async function enrichFeedDetails(items){
 }
 
 async function fetchRssBucket(bucket){
-  const urls=[rssSearchUrl(bucket.query,'en'),rssSearchUrl(bucket.query,'hi')];
+  const qEn=bucket.queryEn||bucket.query||'India news';
+  const qHi=bucket.queryHi||bucket.queryEn||bucket.query||'भारत समाचार';
+  const urls=[rssSearchUrl(qEn,'en'),rssSearchUrl(qHi,'hi')];
   const settled=await Promise.allSettled(urls.map(u=>fetchRssText(u)));
   const xmls=settled.filter(s=>s.status==='fulfilled'&&s.value).map(s=>s.value);
   if(!xmls.length)throw new Error('RSS fetch failed: '+bucket.category);
@@ -1142,7 +1147,8 @@ async function fetchRssBucket(bucket){
         category,
         priority:pickPriority(category,publishedAt),
         source:String(source).trim()||'Google News',
-        publishedAt
+        publishedAt,
+        language:hasHindiText(title+' '+summary)?'HI':'EN'
       });
     });
   });
@@ -1283,6 +1289,7 @@ function showLiveFeed(){
 }
 
 function hasHindiText(t){return /[\u0900-\u097F]/.test(String(t||''));}
+function detectNewsLanguage(x){return String(x?.language||'').toUpperCase()==='HI'||hasHindiText((x?.headline||'')+' '+(x?.summary||''))?'HI':'EN';}
 
 async function pMapLimit(items,limit,fn){
   const out=new Array(items.length);let i=0;
@@ -1402,7 +1409,8 @@ function normalizeFeedItem(n,i){
     category,
     priority,
     source:String(x.source||'News').trim(),
-    publishedAt
+    publishedAt,
+    language:detectNewsLanguage(x)
   };
 }
 
@@ -1487,30 +1495,48 @@ async function getFeedArray(prompt){
   return makeFallbackFeed(lastRaw||lastLineRaw);
 }
 
-async function loadFeed(){
+function updateCountdownUI(){
+  const cd=document.getElementById('countdown');
+  const f=document.getElementById('cd-f');
+  const secs=Math.max(0,S.cds||0);
+  const m=Math.floor(secs/60).toString().padStart(2,'0');
+  const s=(secs%60).toString().padStart(2,'0');
+  if(cd)cd.textContent=m+':'+s;
+  if(f)f.style.width=((secs/FEED_REFRESH_SECONDS)*100)+'%';
+}
+
+async function loadFeed(mode='manual'){
+  if(S.feedLoading){if(mode==='manual')toast('⚠ News refresh already running','err');return;}
   const el=document.getElementById('news-list');
-  el.innerHTML='<div class="empty"><div class="spn" style="margin:0 auto 8px;"></div><div class="em">LOADING NEWS...</div><div class="lbar" style="max-width:220px;margin:8px auto 0;"><div class="lbarf"></div></div></div>';
+  S.feedLoading=true;
+  if(!S.news.length||mode!=='auto')el.innerHTML='<div class="empty"><div class="spn" style="margin:0 auto 8px;"></div><div class="em">LOADING NEWS...</div><div class="lbar" style="max-width:220px;margin:8px auto 0;"><div class="lbarf"></div></div></div>';
   try{
     let rss=[];
     try{rss=await getLiveFeedFromRss();}catch(e){console.warn('RSS live feed failed',e);}
     if(!rss.length)throw new Error('Live sources are temporarily unavailable. Please refresh in a minute.');
     if(rss.length<FEED_MIN_NEW)console.warn('Low live story volume:',rss.length);
     let normalized=rss.map((n,i)=>normalizeFeedItem(n,i)).sort((a,b)=>toTs(b.publishedAt)-toTs(a.publishedAt));
-    normalized=await enrichFeedDetails(normalized);
     archiveCurrentFeed();
     S.activeFeed='live';
     const merged=mergeWithPrevious(normalized);
-    S.news=await translateNewsToHindi(merged);S.fn=[...S.news];
-    renderFeed(S.fn);updateFS(S.fn);startCD();
+    S.news=merged;S.fn=[...S.news];
+    renderFeed(S.fn);updateFS(S.fn);
     const fresh=S.news.filter(n=>minAgo(toTs(n.publishedAt))<=FEED_RECENT_MIN).length;
     toast('✅ '+S.news.length+' stories loaded ('+fresh+' fresh)','ok');logA('News feed refreshed','📡');
-  }catch(e){el.innerHTML='<div class="empty"><div class="ei">❌</div><div class="em">'+e.message+'</div></div>';toast('❌ '+e.message,'err');}
+  }catch(e){
+    if(!S.news.length)el.innerHTML='<div class="empty"><div class="ei">❌</div><div class="em">'+e.message+'</div></div>';
+    toast('❌ '+e.message,'err');
+  }finally{
+    S.feedLoading=false;
+    S.cds=FEED_REFRESH_SECONDS;
+    updateCountdownUI();
+  }
 }
 function updateFS(list){
   const src=list||getBaseFeed();
   document.getElementById('sf-tot').textContent=src.length;
   document.getElementById('sf-hi').textContent=src.filter(n=>n.priority==='HIGH').length;
-  document.getElementById('sf-loc').textContent=src.filter(n=>['odisha','north_india'].includes(n.category)).length;
+  document.getElementById('sf-loc').textContent=src.filter(n=>['odisha','north_india','bihar'].includes(n.category)).length;
   document.getElementById('sf-vir').textContent=src.filter(n=>['world','entertainment'].includes(n.category)).length;
 }
 function renderFeed(news){
@@ -1521,18 +1547,20 @@ function renderFeed(news){
     <div class="nnum">${String(i+1).padStart(2,'0')}</div>
     <div style="flex:1;"><div class="nhd">${n.headline}</div>
     ${n.summary?`<div class="nsm">${n.summary}</div>`:''}
-    <div class="nmeta"><span class="tg ${n.category||'national'}">${catLabel(n.category)}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span style="font-size:8px;color:var(--t3);">🕒 ${ageText(toTs(n.publishedAt))}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
+    <div class="nmeta"><span class="tg ${n.category||'national'}">${catLabel(n.category)}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span class="tg lang">${detectNewsLanguage(n)}</span><span style="font-size:8px;color:var(--t3);">🕒 ${ageText(toTs(n.publishedAt))}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
     ${can?`<div class="nacts"><button class="bsm g" onclick='qGen("${n.id}")'>⚡ Gen</button><button class="bsm a" onclick='qAssign("${n.id}")'>👥 Assign</button></div>`:''}
   </div>`).join('');
 }
 function filterFeed(el,cat){document.querySelectorAll('#tab-feed .ch').forEach(c=>c.classList.remove('on'));el.classList.add('on');const base=getBaseFeed();S.fn=cat==='all'?[...base]:base.filter(n=>n.category===cat);renderFeed(S.fn);updateFS(S.fn);}
-function searchFeed(q){const base=getBaseFeed();S.fn=q?base.filter(n=>(n.headline+(n.summary||'')).toLowerCase().includes(q.toLowerCase())):[...base];renderFeed(S.fn);updateFS(S.fn);}
+function searchFeed(q){const base=getBaseFeed();S.fn=q?base.filter(n=>(n.headline+' '+(n.summary||'')+' '+(n.source||'')).toLowerCase().includes(q.toLowerCase())):[...base];renderFeed(S.fn);updateFS(S.fn);}
 function startCD(){
-  if(S.cdt)clearInterval(S.cdt);S.cds=3600;
-  S.cdt=setInterval(()=>{S.cds--;const m=Math.floor(S.cds/60).toString().padStart(2,'0'),s=(S.cds%60).toString().padStart(2,'0');
-    const cd=document.getElementById('countdown');if(cd)cd.textContent=m+':'+s;
-    const f=document.getElementById('cd-f');if(f)f.style.width=((S.cds/3600)*100)+'%';
-    if(S.cds<=0){clearInterval(S.cdt);loadFeed();}
+  if(S.cdt)clearInterval(S.cdt);
+  S.cds=typeof S.cds==='number'&&S.cds>0&&S.cds<=FEED_REFRESH_SECONDS?S.cds:FEED_REFRESH_SECONDS;
+  updateCountdownUI();
+  S.cdt=setInterval(()=>{
+    S.cds=Math.max(0,(S.cds||0)-1);
+    updateCountdownUI();
+    if(S.cds===0&&!S.feedLoading)loadFeed('auto');
   },1000);
 }
 function qGen(id){
