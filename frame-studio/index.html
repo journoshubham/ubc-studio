@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UBC Short Frame Studio</title>
+    <script>
+      if (new URLSearchParams(window.location.search).get("embed") === "1") {
+        document.documentElement.classList.add("embed-mode");
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Hind:wght@400;500;600;700&family=Khand:wght@500;600;700&family=Mukta:wght@400;500;700;800&family=Noto+Sans+Devanagari:wght@400;500;700;800&family=Noto+Serif+Devanagari:wght@400;600;700&family=Teko:wght@400;500;600;700&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="hero">
+        <div>
+          <p class="hero__eyebrow">Transparent Short-Video Overlay Generator</p>
+          <h1>UBC Short Frame Studio</h1>
+          <p class="hero__copy">
+            Designed lower-thirds and overlay frames for reels, shorts, and news videos with transparent export,
+            separate layout controls, and your original UBC logo preserved.
+          </p>
+        </div>
+        <div class="hero__badge">PNG + SVG export</div>
+      </header>
+
+      <main class="workspace">
+        <aside class="sidebar">
+          <section class="card">
+            <div class="card__header">
+              <div>
+                <p class="card__eyebrow">Templates</p>
+                <h2>Design Library</h2>
+              </div>
+              <button id="resetLayout" class="button button--ghost" type="button">Reset</button>
+            </div>
+            <div id="templateGrid" class="template-grid"></div>
+          </section>
+
+          <details class="card details" open>
+            <summary>Content</summary>
+            <div class="card__body">
+              <label class="field">
+                <span>Headline</span>
+                <textarea id="headline" rows="3"></textarea>
+              </label>
+              <label class="field">
+                <span>Subheadline</span>
+                <textarea id="subheadline" rows="3"></textarea>
+              </label>
+              <label class="field">
+                <span>Category / Tag</span>
+                <input id="category" list="categoryPresets" type="text" />
+              </label>
+              <label class="field">
+                <span>Footer label</span>
+                <input id="footerText" type="text" />
+              </label>
+            </div>
+          </details>
+
+          <details class="card details" open>
+            <summary>Style</summary>
+            <div class="card__body card__body--grid">
+              <label class="field">
+                <span>Theme</span>
+                <select id="theme">
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Category style</span>
+                <select id="categoryStyle">
+                  <option value="pill">Pill</option>
+                  <option value="slab">Slab</option>
+                  <option value="block">Block</option>
+                  <option value="outline">Outline</option>
+                  <option value="ribbon">Ribbon</option>
+                  <option value="skew">Skew</option>
+                </select>
+              </label>
+              <label class="field color-field">
+                <span>Accent</span>
+                <input id="accentColor" type="color" />
+              </label>
+              <label class="field color-field">
+                <span>Secondary</span>
+                <input id="secondaryColor" type="color" />
+              </label>
+              <label class="field color-field">
+                <span>Panel</span>
+                <input id="panelColor" type="color" />
+              </label>
+              <label class="field color-field">
+                <span>Text</span>
+                <input id="textColor" type="color" />
+              </label>
+            </div>
+          </details>
+
+          <details class="card details">
+            <summary>Typography</summary>
+            <div class="card__body card__body--grid">
+              <label class="field">
+                <span>Headline font</span>
+                <select id="headlineFont"></select>
+              </label>
+              <label class="field">
+                <span>Subheadline font</span>
+                <select id="subheadlineFont"></select>
+              </label>
+              <label class="field">
+                <span>Category font</span>
+                <select id="categoryFont"></select>
+              </label>
+              <label class="field range-field">
+                <span>Headline size <strong id="headlineSizeValue"></strong></span>
+                <input id="headlineSize" type="range" min="54" max="112" step="2" />
+              </label>
+              <label class="field range-field">
+                <span>Subheadline size <strong id="subheadlineSizeValue"></strong></span>
+                <input id="subheadlineSize" type="range" min="24" max="48" step="2" />
+              </label>
+              <label class="field range-field">
+                <span>Logo size <strong id="logoSizeValue"></strong></span>
+                <input id="logoSize" type="range" min="90" max="240" step="5" />
+              </label>
+            </div>
+          </details>
+
+          <details class="card details">
+            <summary>Logo</summary>
+            <div class="card__body card__body--grid">
+              <label class="field toggle-field">
+                <span>Show logo</span>
+                <input id="showLogo" type="checkbox" />
+              </label>
+              <label class="field">
+                <span>Logo background</span>
+                <select id="logoStyle">
+                  <option value="none">None</option>
+                  <option value="capsule">Capsule</option>
+                  <option value="rounded">Rounded</option>
+                  <option value="circle">Circle</option>
+                  <option value="diamond">Diamond</option>
+                  <option value="shield">Shield</option>
+                  <option value="glow">Glow</option>
+                </select>
+              </label>
+              <label class="field color-field">
+                <span>Logo bg color</span>
+                <input id="logoBgColor" type="color" />
+              </label>
+            </div>
+          </details>
+
+          <details class="card details">
+            <summary>Social</summary>
+            <div class="card__body card__body--grid">
+              <label class="field toggle-field">
+                <span>Show social</span>
+                <input id="showSocial" type="checkbox" />
+              </label>
+              <label class="field">
+                <span>Primary platform</span>
+                <select id="socialPlatform"></select>
+              </label>
+              <label class="field">
+                <span>Handle / Label</span>
+                <input id="socialHandle" type="text" />
+              </label>
+              <label class="field">
+                <span>Icon style</span>
+                <select id="socialStyle">
+                  <option value="brand">Brand</option>
+                  <option value="white">White</option>
+                  <option value="mono">Mono</option>
+                  <option value="outline">Outline</option>
+                </select>
+              </label>
+              <label class="field color-field">
+                <span>Icon color</span>
+                <input id="socialColor" type="color" />
+              </label>
+              <label class="field range-field">
+                <span>Icon size <strong id="socialSizeValue"></strong></span>
+                <input id="socialSize" type="range" min="22" max="42" step="2" />
+              </label>
+            </div>
+          </details>
+
+          <details class="card details">
+            <summary>Position</summary>
+            <div class="card__body card__body--grid">
+              <label class="field range-field">
+                <span>Frame X <strong id="frameOffsetXValue"></strong></span>
+                <input id="frameOffsetX" type="range" min="-920" max="920" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Frame Y <strong id="frameOffsetYValue"></strong></span>
+                <input id="frameOffsetY" type="range" min="-1640" max="1640" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Text X <strong id="textOffsetXValue"></strong></span>
+                <input id="textOffsetX" type="range" min="-920" max="920" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Text Y <strong id="textOffsetYValue"></strong></span>
+                <input id="textOffsetY" type="range" min="-1640" max="1640" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Category X <strong id="categoryOffsetXValue"></strong></span>
+                <input id="categoryOffsetX" type="range" min="-920" max="920" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Category Y <strong id="categoryOffsetYValue"></strong></span>
+                <input id="categoryOffsetY" type="range" min="-1640" max="1640" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Social X <strong id="socialOffsetXValue"></strong></span>
+                <input id="socialOffsetX" type="range" min="-920" max="920" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Social Y <strong id="socialOffsetYValue"></strong></span>
+                <input id="socialOffsetY" type="range" min="-1640" max="1640" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Logo X <strong id="logoOffsetXValue"></strong></span>
+                <input id="logoOffsetX" type="range" min="-920" max="920" step="4" />
+              </label>
+              <label class="field range-field">
+                <span>Logo Y <strong id="logoOffsetYValue"></strong></span>
+                <input id="logoOffsetY" type="range" min="-1640" max="1640" step="4" />
+              </label>
+            </div>
+          </details>
+        </aside>
+
+        <section class="stage">
+          <div class="stage__toolbar">
+            <label class="field">
+              <span>Preview background</span>
+              <select id="previewBackground">
+                <option value="checker">Checker</option>
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="warm">Warm</option>
+              </select>
+            </label>
+            <div class="stage__hint">Export always stays transparent outside the designed overlay area.</div>
+          </div>
+
+          <div class="stage__frame">
+            <div id="previewCanvas" class="preview preview--checker" aria-live="polite"></div>
+          </div>
+
+          <div class="stage__actions">
+            <button id="downloadPng" class="button" type="button">Download Transparent PNG</button>
+            <button id="downloadSvg" class="button button--ghost" type="button">Download SVG</button>
+          </div>
+
+          <p class="stage__note">
+            Use the PNG export directly over video in Premiere Pro, CapCut, VN, Canva, or any editor that supports
+            transparent overlays.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <datalist id="categoryPresets">
+      <option value="GROUND REPORT"></option>
+      <option value="BREAKING"></option>
+      <option value="BIG QUESTION"></option>
+      <option value="POLITICAL PULSE"></option>
+      <option value="SPECIAL REPORT"></option>
+      <option value="ODISHA UPDATE"></option>
+      <option value="FACT CHECK"></option>
+      <option value="LIVE NOW"></option>
+    </datalist>
+
+    <script src="logo-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -305,6 +305,14 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .voa audio{height:34px;max-width:360px;}
 .pta{width:100%;background:var(--s3);border:1px solid var(--b);border-radius:8px;padding:9px;color:var(--t1);font-size:11px;font-family:"Noto Sans Devanagari",sans-serif;line-height:1.7;resize:vertical;}
 .pta:focus{outline:none;border-color:rgba(255,51,102,0.28);}
+.framehub{display:grid;gap:12px;}
+.framehub__hero{background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;}
+.framehub__hero h2{font-size:20px;font-weight:700;margin-bottom:5px;}
+.framehub__hero p{font-size:11px;line-height:1.7;color:var(--t2);max-width:700px;}
+.framehub__actions{display:flex;gap:6px;flex-wrap:wrap;}
+.framehub__panel{background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:12px;}
+.framehub__meta{display:flex;gap:6px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.framehub__iframe{width:100%;height:min(1180px,calc(100vh - var(--th) - 124px));min-height:880px;border:1px solid var(--b);border-radius:12px;background:#0A0F14;}
 /* Tone */
 .tong{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
 .tnc{background:var(--s2);border:2px solid var(--b);border-radius:10px;padding:13px;cursor:pointer;transition:all 0.16s;}
@@ -343,7 +351,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
 .empty{text-align:center;padding:40px 14px;color:var(--t3);}
 .ei{font-size:34px;margin-bottom:7px;}
 .em{font-size:10px;letter-spacing:1px;}
-@media(max-width:900px){.dg4,.fsr,.d2{grid-template-columns:1fr 1fr;}.gl{grid-template-columns:1fr;}.sg{grid-template-columns:1fr;}.pg{grid-template-columns:1fr;}.tgrd{grid-template-columns:1fr 1fr;}.phf{grid-template-columns:1fr;}.prhd{display:none;}.prr{grid-template-columns:1fr;gap:5px;}.pra{justify-content:flex-start;}.voa audio{max-width:100%;width:100%;}}
+@media(max-width:900px){.dg4,.fsr,.d2{grid-template-columns:1fr 1fr;}.gl{grid-template-columns:1fr;}.sg{grid-template-columns:1fr;}.pg{grid-template-columns:1fr;}.tgrd{grid-template-columns:1fr 1fr;}.phf{grid-template-columns:1fr;}.prhd{display:none;}.prr{grid-template-columns:1fr;gap:5px;}.pra{justify-content:flex-start;}.voa audio{max-width:100%;width:100%;}.framehub__hero{flex-direction:column;align-items:flex-start;}.framehub__iframe{height:980px;min-height:980px;}}
 </style>
 </head>
 <body>
@@ -396,6 +404,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
       <button class="nbb" id="nb-feed" onclick="showTab('feed')">📡<span class="tip">LIVE FEED</span></button>
       <button class="nbb" id="nb-generate" onclick="showTab('generate')">⚡<span class="tip">GENERATE</span></button>
       <button class="nbb" id="nb-production" onclick="showTab('production')">🎬<span class="tip">PRODUCTION</span></button>
+      <button class="nbb" id="nb-frame" onclick="showTab('frame')">🖼️<span class="tip">FRAME STUDIO</span></button>
       <button class="nbb" id="nb-tasks" onclick="showTab('tasks')">📋<span class="tip">TASKS</span></button>
       <button class="nbb" id="nb-chat" onclick="showTab('chat')">💬<span class="tip">MESSAGES</span><span class="nbbdg" id="cb">0</span></button>
       <button class="nbb" id="nb-team" onclick="showTab('team')">👥<span class="tip">TEAM</span></button>
@@ -544,6 +553,39 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
             <div class="pp"><div class="ppl">◎ INSTAGRAM<button class="bcp" onclick="cpF('pf-ig')">COPY</button></div><textarea class="pta" id="pf-ig" rows="4"></textarea></div>
             <div class="pp"><div class="ppl">◉ WHATSAPP<button class="bcp" onclick="cpF('pf-wa')">COPY</button></div><textarea class="pta" id="pf-wa" rows="4"></textarea></div>
             <div class="pp full"><div class="ppl">▶ YOUTUBE DESC<button class="bcp" onclick="cpF('pf-desc')">COPY</button></div><textarea class="pta" id="pf-desc" rows="4"></textarea></div>
+          </div>
+        </div>
+
+        <!-- FRAME STUDIO -->
+        <div class="tab" id="tab-frame">
+          <div class="framehub">
+            <div class="framehub__hero">
+              <div>
+                <div class="btl" style="margin-bottom:6px;">TRANSPARENT REEL OVERLAYS</div>
+                <h2>Frame Studio</h2>
+                <p>Build transparent PNG and SVG video frames inside News Studio. The full UBC frame generator loads below and stays publish-ready for GitHub Pages.</p>
+              </div>
+              <div class="framehub__actions">
+                <button class="ib st" onclick="openFrameStudioNewTab()">↗ OPEN FULL PAGE</button>
+                <button class="ib" onclick="reloadFrameStudio()">↻ RELOAD TOOL</button>
+              </div>
+            </div>
+            <div class="framehub__panel">
+              <div class="framehub__meta">
+                <div class="sr" style="margin-bottom:0;">
+                  <div class="spl sp-ok"><span class="spd"></span>Transparent PNG + SVG export</div>
+                  <div class="spl sp-w"><span class="spd"></span>Folder: <code style="font-family:'JetBrains Mono',monospace;">/frame-studio/</code></div>
+                </div>
+              </div>
+              <iframe
+                id="frame-studio-embed"
+                class="framehub__iframe"
+                title="UBC Frame Studio"
+                loading="lazy"
+                allow="clipboard-write"
+                data-src="./frame-studio/index.html?embed=1"
+              ></iframe>
+            </div>
           </div>
         </div>
 
@@ -738,7 +780,8 @@ const FEED_BUCKETS=[
 ];
 const LEGACY_GEM_KEYS=new Set(['AIzaSyCWX7r5wiJeobS12LPaOm1vyh7lC5jgCA8']);
 const RC={admin:'#FF3366',producer:'#FFD700',editor:'#0EA5E9',anchor:'#00E5A0'};
-const RA={admin:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','tasks','chat','team','reports','tone','settings'],editor:['dashboard','production','tasks','chat','team','settings'],anchor:['dashboard','production','tasks','chat','team','settings']};
+const FRAME_STUDIO_PATH='./frame-studio/index.html';
+const RA={admin:['dashboard','feed','generate','production','frame','tasks','chat','team','reports','tone','settings'],producer:['dashboard','feed','generate','production','frame','tasks','chat','team','reports','tone','settings'],editor:['dashboard','production','frame','tasks','chat','team','settings'],anchor:['dashboard','production','frame','tasks','chat','team','settings']};
 let S={p:null,ai:'gemini',fmt:'reel',lang:'hindi',plat:['yt','fb','ig','wa'],news:[],fn:[],tone:'aggressive',tex:'',tctx:'',gk:'',ck:'',ek:'',evoice:ELEVEN_VOICE_DEFAULT,evoices:[{id:ELEVEN_VOICE_DEFAULT,name:ELEVEN_VOICE_NAME_DEFAULT}],emodel:ELEVEN_MODEL_DEFAULT,ttsProvider:'browser',ttsAudio:'',story:null,gd:null,team:[],tasks:[],notifs:[],unread:0,room:'general',cdt:null,cds:FEED_REFRESH_SECONDS,asgn:null,feedBatches:[],activeFeed:'live',genHist:[],knownUsers:[],prodForceToday:false,feedLoading:false};
 
 function cleanGemKey(key){const k=(key||'').trim();return LEGACY_GEM_KEYS.has(k)?'':k;}
@@ -861,7 +904,18 @@ function init(){
   updateSP();showTab('dashboard');loadTeam();listenTasks();listenNotifs();loadToneDB();loadActivity();listenGenHistory();listenFeedArchive();renderFeedHistory();startCD(true);if(allowed.includes('feed'))loadFeed('init');
 }
 
-const TTL={dashboard:'DASHBOARD',feed:'LIVE NEWS FEED',generate:'GENERATE CONTENT',production:'PRODUCTION SHEET',tasks:'TASK MANAGER',chat:'TEAM CHAT',team:'TEAM MANAGEMENT',reports:'REPORTS',tone:'TONE & STYLE',settings:'SETTINGS'};
+const TTL={dashboard:'DASHBOARD',feed:'LIVE NEWS FEED',generate:'GENERATE CONTENT',production:'PRODUCTION SHEET',frame:'FRAME STUDIO',tasks:'TASK MANAGER',chat:'TEAM CHAT',team:'TEAM MANAGEMENT',reports:'REPORTS',tone:'TONE & STYLE',settings:'SETTINGS'};
+function ensureFrameStudioLoaded(force){
+  const iframe=document.getElementById('frame-studio-embed');
+  if(!iframe)return;
+  const src=(iframe.dataset.src||FRAME_STUDIO_PATH)+(force&&!(iframe.dataset.src||FRAME_STUDIO_PATH).includes('?')?'?t='+Date.now():force?'&t='+Date.now():'');
+  if(force||!iframe.dataset.loaded){
+    iframe.src=src;
+    iframe.dataset.loaded='1';
+  }
+}
+function openFrameStudioNewTab(){window.open(FRAME_STUDIO_PATH,'_blank','noopener');}
+function reloadFrameStudio(){ensureFrameStudioLoaded(true);toast('🎞 Frame Studio reloaded','ok');}
 function showTab(id){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.querySelectorAll('.nbb').forEach(n=>n.classList.remove('on'));
@@ -877,6 +931,7 @@ function showTab(id){
     S.prodForceToday=false;
     renderProdHistory();renderVoiceLibrary();
   }
+  if(id==='frame')ensureFrameStudioLoaded(false);
   if(id==='settings')renderVoiceLibrary();
   if(id==='feed'&&!S.news.length&&!S.feedLoading)loadFeed('tab');
   if(id==='dashboard')loadDash();
