@@ -394,6 +394,7 @@ body.light .tip{background:#fff;color:#0F172A;border-color:rgba(15,23,42,0.2);}
       <div class="uav" id="u-av"></div>
       <div><div style="font-size:11px;font-weight:600;" id="u-nm"></div><div style="font-size:9px;color:var(--t2);letter-spacing:1px;" id="u-rl"></div></div>
     </div>
+    <a href="./frame-studio/" target="_blank" style="padding:4px 12px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1px solid rgba(168,85,247,0.4);color:#A855F7;background:rgba(168,85,247,0.1);text-decoration:none;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:5px;" onmouseover="this.style.background='rgba(168,85,247,0.22)';this.style.boxShadow='0 0 12px rgba(168,85,247,0.3)'" onmouseout="this.style.background='rgba(168,85,247,0.1)';this.style.boxShadow='none'">⬡ FRAME STUDIO</a>
     <button class="tout" onclick="doLogout()">LOGOUT</button>
   </div>
   <div class="abody">
@@ -761,6 +762,7 @@ const RSS_PROXY='https://api.allorigins.win/raw?url=';
 const LS_THEME='ubc_theme_v1';
 const LS_FEED_BATCH='ubc_feed_batches_v1';
 const LS_KNOWN_USERS='ubc_known_users_v1';
+const LS_SESSION='ubc_session_v1';
 const ELEVEN_API='https://api.elevenlabs.io/v1/text-to-speech/';
 const ELEVEN_VOICE_DEFAULT='EXAVITQu4vr4xnSDxMaL';
 const ELEVEN_VOICE_NAME_DEFAULT='Default Voice';
@@ -768,12 +770,12 @@ const ELEVEN_MODEL_DEFAULT='eleven_multilingual_v2';
 const FEED_ARCHIVE_PATH='feedArchive';
 const FEED_ARCHIVE_MAX=80;
 const FEED_BUCKETS=[
-  {category:'national',count:26,queryEn:'(India OR "Government of India" OR Parliament OR Supreme Court) when:1h',queryHi:'(भारत OR संसद OR सुप्रीम कोर्ट OR केंद्र सरकार) when:1h'},
-  {category:'odisha',count:12,queryEn:'(Odisha OR Bhubaneswar OR Cuttack OR Puri) when:2h',queryHi:'(ओडिशा OR भुवनेश्वर OR कटक OR पुरी) when:2h'},
+  {category:'national',count:26,queryEn:'(India OR "Government of India" OR Parliament OR Supreme Court) when:1h',queryHi:'(भारत OR संसद OR सुप्रीम कोर्ट OR केंद्र सरकार) when:1h',queryOr:'(ଭାରତ OR ସଂସଦ OR ସୁପ୍ରିମ କୋର୍ଟ) when:1h'},
+  {category:'odisha',count:12,queryEn:'(Odisha OR Bhubaneswar OR Cuttack OR Puri) when:2h',queryHi:'(ओडिशा OR भुवनेश्वर OR कटक OR पुरी) when:2h',queryOr:'(ଓଡ଼ିଶା OR ଭୁବନେଶ୍ୱର OR କଟକ OR ପୁରୀ OR ରାଉରକେଲା OR ସମ୍ବଲପୁର) when:2h'},
   {category:'north_india',count:10,queryEn:'("North India" OR Delhi OR "Uttar Pradesh" OR Punjab OR Haryana OR Rajasthan OR Uttarakhand OR Himachal) when:2h',queryHi:'("उत्तर भारत" OR दिल्ली OR "उत्तर प्रदेश" OR पंजाब OR हरियाणा OR राजस्थान OR उत्तराखंड OR हिमाचल) when:2h'},
   {category:'world',count:9,queryEn:'("World news" OR international OR diplomacy OR conflict) when:1h',queryHi:'("विश्व समाचार" OR अंतरराष्ट्रीय OR कूटनीति OR संघर्ष) when:1h'},
-  {category:'entertainment',count:8,queryEn:'(Bollywood OR "Indian entertainment" OR celebrity OR film) when:3h',queryHi:'(बॉलीवुड OR मनोरंजन OR सेलिब्रिटी OR फिल्म) when:3h'},
-  {category:'politics',count:4,queryEn:'("India politics" OR election OR parliament) when:2h',queryHi:'("भारतीय राजनीति" OR चुनाव OR संसद) when:2h'},
+  {category:'entertainment',count:8,queryEn:'(Bollywood OR "Indian entertainment" OR celebrity OR film) when:3h',queryHi:'(बॉलीवुड OR मनोरंजन OR सेलिब्रिटी OR फिल्म) when:3h',queryOr:'(ବଲିଉଡ OR ମନୋରଞ୍ଜନ OR ଚଳଚ୍ଚିତ୍ର) when:3h'},
+  {category:'politics',count:4,queryEn:'("India politics" OR election OR parliament) when:2h',queryHi:'("भारतीय राजनीति" OR चुनाव OR संसद) when:2h',queryOr:'(ରାଜନୀତି OR ନିର୍ବାଚନ) when:2h'},
   {category:'economy',count:3,queryEn:'("India economy" OR inflation OR market OR rupee) when:2h',queryHi:'("भारतीय अर्थव्यवस्था" OR महंगाई OR बाजार OR रुपया) when:2h'},
   {category:'crime',count:2,queryEn:'("India crime" OR police OR court) when:2h',queryHi:'("भारत अपराध" OR पुलिस OR अदालत) when:2h'},
   {category:'bihar',count:1,queryEn:'(Bihar) when:3h',queryHi:'(बिहार) when:3h'}
@@ -862,6 +864,7 @@ function doLogin(){
         S.emodel=(v.elevenModelId||ELEVEN_MODEL_DEFAULT).trim();
       }
       db.ref('users/'+uid+'/lastSeen').set(Date.now());
+      localStorage.setItem(LS_SESSION,JSON.stringify({u:S.p.username,n:S.p.name||S.p.username,r:S.p.role,t:Date.now()}));
       document.getElementById('lg').style.display='none';
       const app=document.getElementById('app');app.classList.add('on');app.style.display='flex';app.style.flexDirection='column';
       init();
@@ -870,6 +873,7 @@ function doLogin(){
 }
 function se(m){const e=document.getElementById('l-err');e.textContent='⚠ '+m;setTimeout(()=>e.textContent='',3000);}
 function doLogout(){
+  localStorage.removeItem(LS_SESSION);
   if(S.p)db.ref('users/'+S.p.uid+'/lastSeen').set(Date.now());
   if(S.ttsAudio){try{URL.revokeObjectURL(S.ttsAudio);}catch(_){}S.ttsAudio='';}
   if(window.speechSynthesis)window.speechSynthesis.cancel();
@@ -1106,8 +1110,10 @@ function inferCategory(headline,summary,source,fallback='national'){
 
 function rssSearchUrl(query,lang='en'){
   const lc=String(lang||'en').toLowerCase();
-  const l=lc==='hi'?'hi-IN':'en-IN';
-  const ceid=lc==='hi'?'IN:hi':'IN:en';
+  const langMap={hi:'hi-IN',or:'or-IN',en:'en-IN'};
+  const ceidMap={hi:'IN:hi',or:'IN:or',en:'IN:en'};
+  const l=langMap[lc]||'en-IN';
+  const ceid=ceidMap[lc]||'IN:en';
   return 'https://news.google.com/rss/search?q='+encodeURIComponent(query)+'&hl='+encodeURIComponent(l)+'&gl=IN&ceid='+encodeURIComponent(ceid);
 }
 
@@ -1180,6 +1186,7 @@ async function fetchRssBucket(bucket){
   const qEn=bucket.queryEn||bucket.query||'India news';
   const qHi=bucket.queryHi||bucket.queryEn||bucket.query||'भारत समाचार';
   const urls=[rssSearchUrl(qEn,'en'),rssSearchUrl(qHi,'hi')];
+  if(bucket.queryOr)urls.push(rssSearchUrl(bucket.queryOr,'or'));
   const settled=await Promise.allSettled(urls.map(u=>fetchRssText(u)));
   const xmls=settled.filter(s=>s.status==='fulfilled'&&s.value).map(s=>s.value);
   if(!xmls.length)throw new Error('RSS fetch failed: '+bucket.category);
@@ -1203,7 +1210,7 @@ async function fetchRssBucket(bucket){
         priority:pickPriority(category,publishedAt),
         source:String(source).trim()||'Google News',
         publishedAt,
-        language:hasHindiText(title+' '+summary)?'HI':'EN'
+        language:hasOdiaText(title+' '+summary)?'OR':hasHindiText(title+' '+summary)?'HI':'EN'
       });
     });
   });
@@ -1344,7 +1351,14 @@ function showLiveFeed(){
 }
 
 function hasHindiText(t){return /[\u0900-\u097F]/.test(String(t||''));}
-function detectNewsLanguage(x){return String(x?.language||'').toUpperCase()==='HI'||hasHindiText((x?.headline||'')+' '+(x?.summary||''))?'HI':'EN';}
+function hasOdiaText(t){return /[\u0B00-\u0B7F]/.test(String(t||''));}
+function detectNewsLanguage(x){
+  const txt=(x?.headline||'')+' '+(x?.summary||'');
+  const lang=String(x?.language||'').toUpperCase();
+  if(lang==='OR'||hasOdiaText(txt))return'OR';
+  if(lang==='HI'||hasHindiText(txt))return'HI';
+  return'EN';
+}
 
 async function pMapLimit(items,limit,fn){
   const out=new Array(items.length);let i=0;
@@ -1578,6 +1592,10 @@ async function loadFeed(mode='manual'){
     renderFeed(S.fn);updateFS(S.fn);
     const fresh=S.news.filter(n=>minAgo(toTs(n.publishedAt))<=FEED_RECENT_MIN).length;
     toast('✅ '+S.news.length+' stories loaded ('+fresh+' fresh)','ok');logA('News feed refreshed','📡');
+    // Background enrich: fetch full article details without blocking feed display
+    enrichFeedDetails(S.news).then(enriched=>{
+      S.news=enriched;S.fn=S.activeFeed==='live'?[...S.news]:S.fn;
+    }).catch(_=>{});
   }catch(e){
     if(!S.news.length)el.innerHTML='<div class="empty"><div class="ei">❌</div><div class="em">'+e.message+'</div></div>';
     toast('❌ '+e.message,'err');
@@ -1594,6 +1612,9 @@ function updateFS(list){
   document.getElementById('sf-loc').textContent=src.filter(n=>['odisha','north_india','bihar'].includes(n.category)).length;
   document.getElementById('sf-vir').textContent=src.filter(n=>['world','entertainment'].includes(n.category)).length;
 }
+function fmtPubDate(ts){
+  try{return new Date(ts).toLocaleString('hi-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(_){return'—';}
+}
 function renderFeed(news){
   const el=document.getElementById('news-list');
   if(!news.length){el.innerHTML='<div class="empty"><div class="ei">🔍</div><div class="em">No stories found</div></div>';return;}
@@ -1603,8 +1624,48 @@ function renderFeed(news){
     <div style="flex:1;"><div class="nhd">${n.headline}</div>
     ${n.summary?`<div class="nsm">${n.summary}</div>`:''}
     <div class="nmeta"><span class="tg ${n.category||'national'}">${catLabel(n.category)}</span><span class="tg ${(n.priority||'low').toLowerCase()}">${n.priority||'LOW'}</span><span class="tg lang">${detectNewsLanguage(n)}</span><span style="font-size:8px;color:var(--t3);">🕒 ${ageText(toTs(n.publishedAt))}</span><span style="font-size:8px;color:var(--t3);">📡 ${n.source||'News'}</span></div></div>
-    ${can?`<div class="nacts"><button class="bsm g" onclick='qGen("${n.id}")'>⚡ Gen</button><button class="bsm a" onclick='qAssign("${n.id}")'>👥 Assign</button></div>`:''}
+    <div class="nacts">
+      <button class="bsm km" onclick='showNewsDetail("${n.id}")' style="background:rgba(14,165,233,0.12);color:#0EA5E9;border:1px solid rgba(14,165,233,0.3);">🔍 Know More</button>
+      ${can?`<button class="bsm g" onclick='qGen("${n.id}")'>⚡ Gen</button><button class="bsm a" onclick='qAssign("${n.id}")'>👥 Assign</button>`:''}
+    </div>
   </div>`).join('');
+}
+async function showNewsDetail(id){
+  const n=(S.news||[]).find(x=>x.id===id);
+  if(!n)return;
+  const pubDate=fmtPubDate(toTs(n.publishedAt));
+  let detail=n.detail||'';
+  // If no detail yet, try fetching it now
+  if(!detail&&n.link){
+    toast('🔄 Fetching full details...','ok');
+    try{
+      const raw=await fetchArticleText(n.link);
+      detail=pickDetailSummary(raw,n.headline);
+      if(detail)n.detail=detail;
+    }catch(_){}
+  }
+  const detailHtml=detail?`<div style="margin-top:12px;padding:14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid var(--b);font-size:12px;line-height:1.8;color:var(--t2);">${detail}</div>`:`<div style="margin-top:12px;padding:12px;background:rgba(255,140,0,0.08);border-radius:10px;border:1px solid rgba(255,140,0,0.2);font-size:11px;color:var(--ora);">विस्तृत जानकारी उपलब्ध नहीं। मूल स्रोत पर जाकर पूरी खबर पढ़ें।</div>`;
+  const modal=document.createElement('div');
+  modal.className='modal on';
+  modal.id='news-detail-modal';
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  modal.innerHTML=`<div class="mbox" style="max-width:620px;max-height:80vh;overflow-y:auto;padding:28px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+      <span class="tg ${n.category||'national'}" style="font-size:10px;">${catLabel(n.category)}</span>
+      <button onclick="document.getElementById('news-detail-modal').remove()" style="background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <h2 style="font-size:18px;font-weight:700;line-height:1.5;margin-bottom:10px;">${n.headline}</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;font-size:10px;color:var(--t3);">
+      <span>📡 ${n.source||'News'}</span>
+      <span>📅 ${pubDate}</span>
+      <span>🕒 ${ageText(toTs(n.publishedAt))} ago</span>
+      <span class="tg ${(n.priority||'low').toLowerCase()}" style="font-size:9px;">${n.priority||'LOW'}</span>
+    </div>
+    ${n.summary?`<p style="font-size:13px;line-height:1.7;color:var(--t1);margin-bottom:8px;">${n.summary}</p>`:''}
+    ${detailHtml}
+    ${n.link?`<a href="${n.link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:16px;padding:8px 18px;background:linear-gradient(135deg,var(--blu),#0284C7);color:#fff;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:1px;text-decoration:none;">🔗 READ FULL ARTICLE</a>`:''}
+  </div>`;
+  document.body.appendChild(modal);
 }
 function filterFeed(el,cat){document.querySelectorAll('#tab-feed .ch').forEach(c=>c.classList.remove('on'));el.classList.add('on');const base=getBaseFeed();S.fn=cat==='all'?[...base]:base.filter(n=>n.category===cat);renderFeed(S.fn);updateFS(S.fn);}
 function searchFeed(q){const base=getBaseFeed();S.fn=q?base.filter(n=>(n.headline+' '+(n.summary||'')+' '+(n.source||'')).toLowerCase().includes(q.toLowerCase())):[...base];renderFeed(S.fn);updateFS(S.fn);}
